@@ -84,11 +84,11 @@ class General(commands.Cog):
             super().__init__(timeout=60)
             self.bot_instance = bot_instance
         
-        @discord.ui.button(label="🪙 Kopf", style=discord.ButtonStyle.primary, emoji="🪙")
+        @discord.ui.button(label="🪙 Kopf", style=discord.ButtonStyle.primary, emoji="👛")
         async def kopf_button(self, interaction: discord.Interaction, button: discord.ui.Button):
             await self.handle_choice(interaction, "kopf")
         
-        @discord.ui.button(label="🪙 Zahl", style=discord.ButtonStyle.secondary, emoji="🪙")
+        @discord.ui.button(label="🪙 Zahl", style=discord.ButtonStyle.secondary, emoji="👛")
         async def zahl_button(self, interaction: discord.Interaction, button: discord.ui.Button):
             await self.handle_choice(interaction, "zahl")
         
