@@ -1,0 +1,36 @@
+[project]
+name = "discord-bot"
+version = "1.0.0"
+description = "A Discord bot built with discord.py"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+readme = "readme.md"
+requires-python = ">=3.11"
+dependencies = [
+    "discord.py>=2.3.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
