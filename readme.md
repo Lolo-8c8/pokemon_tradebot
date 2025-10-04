@@ -5,6 +5,7 @@ Ein vollständiges Grundgerüst für einen Discord Bot in Python mit discord.py.
 ## 🚀 Features
 
 - **Modulare Struktur** mit Cogs für bessere Organisation
+- **Pokemon-Tausch System** mit interaktiven Auswahlmöglichkeiten
 - **Umfassende Befehle** für allgemeine und Moderationszwecke
 - **Konfigurierbare Einstellungen** über Umgebungsvariablen
 - **Fehlerbehandlung** und Logging
@@ -21,7 +22,8 @@ DiscordBot/
 ├── cogs/              # Modulare Befehlsgruppen
 │   ├── __init__.py
 │   ├── general.py      # Allgemeine Befehle
-│   └── moderation.py   # Moderationsbefehle
+│   ├── moderation.py   # Moderationsbefehle
+│   └── pokemon.py      # Pokemon-Tausch System
 └── readme.md          # Diese Datei
 ```
 
@@ -101,6 +103,15 @@ python bot.py
 - `!poll <frage>` - Ja/Nein-Umfrage erstellen
 - `!avatar [mitglied]` - Avatar anzeigen
 - `!serverinfo` - Server-Informationen
+
+### Pokemon-Tausch System
+- `!bieten` - Pokemon zum Tausch anbieten (interaktives Menü)
+- `!pokemon_help` - Hilfe zum Pokemon-Tausch System
+
+#### Pokemon-Eigenschaften:
+- **Typen**: 🔥 Feuer, 🌊 Wasser, ⚡ Elektro, 🌿 Pflanze, 👊 Kampf, 💜 Liebe, 🐉 Drachen, 🌙 Unlicht
+- **Phasen**: 🥚 Basis, 🐣 Phase 1, 🐤 Phase 2, 🦅 Phase 3
+- **Seltenheit**: ⚪ Häufig, 🔷 Nicht so häufig, ⭐ Selten, 🌟 Doppelselten, 🏆 Illustrationskarte
 
 ### Moderationsbefehle (nur für Moderatoren)
 - `!kick <mitglied> [grund]` - Mitglied kicken

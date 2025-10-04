@@ -7,8 +7,14 @@ import logging
 # Load environment variables
 load_dotenv()
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging with proper formatting
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()  # Ensures output goes to stdout
+    ]
+)
 logger = logging.getLogger(__name__)
 
 # Bot configuration
@@ -22,12 +28,16 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 @bot.event
 async def on_ready():
     """Event that runs when the bot is ready"""
-    print(f'{bot.user} has connected to Discord!')
-    print(f'Bot is in {len(bot.guilds)} guilds')
+    logger.info(f'✅ {bot.user} has connected to Discord!')
+    logger.info(f'📊 Bot is in {len(bot.guilds)} guilds')
+    logger.info(f'👥 Serving {len(bot.users)} users')
     
     # Set bot status
-    activity = discord.Game(name="!help for commands")
+    activity = discord.Game(name="Pokemon Trading | !bieten | !pokemon_help")
     await bot.change_presence(activity=activity)
+    
+    # Log loaded cogs
+    logger.info(f'🔧 Loaded cogs: {list(bot.cogs.keys())}')
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -51,8 +61,8 @@ async def ping(ctx):
 async def info(ctx):
     """Display bot information"""
     embed = discord.Embed(
-        title="Bot Information",
-        description="A Discord bot built with discord.py",
+        title="🎮 Pokemon Trading Bot",
+        description="Ein Discord Bot für Pokemon-Tausch mit discord.py erstellt",
         color=0x00ff00
     )
     embed.add_field(name="Server Count", value=len(bot.guilds), inline=True)
