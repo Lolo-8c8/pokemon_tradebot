@@ -56,6 +56,7 @@ async def ping(ctx):
     """Check bot latency"""
     latency = round(bot.latency * 1000)
     await ctx.send(f'Pong! Latency: {latency}ms')
+    await ctx.message.delete()
 
 @bot.command(name='info')
 async def info(ctx):
@@ -71,6 +72,7 @@ async def info(ctx):
     embed.set_footer(text=f"Bot ID: {bot.user.id}")
     
     await ctx.send(embed=embed)
+    await ctx.message.delete()
 
 # Load cogs
 async def load_cogs():
