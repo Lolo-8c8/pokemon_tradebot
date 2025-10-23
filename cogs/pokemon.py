@@ -186,7 +186,7 @@ class OffersListView(discord.ui.View):
         # Aktualisiere die Angebote-Liste
         await self.cog.show_offers_list(interaction, is_refresh=True)
     
-    @discord.ui.button(label="Schließen", style=discord.ButtonStyle.danger, emoji="❌")
+    @discord.ui.button(label="Schließen", style=discord.ButtonStyle.secondary, emoji="❌")
     async def close_offers(self, interaction: discord.Interaction, button: discord.ui.Button):
         _ = button  # Ignoriere unused argument warning
         embed = discord.Embed(
@@ -298,7 +298,7 @@ class WishSequentialView(discord.ui.View):
         modal = self.cog.PokemonNameModal(self)
         await interaction.response.send_modal(modal)
     
-    @discord.ui.button(label="Abbrechen", style=discord.ButtonStyle.danger, emoji="❌")
+    @discord.ui.button(label="Abbrechen", style=discord.ButtonStyle.secondary, emoji="❌")
     async def cancel_wish(self, interaction: discord.Interaction, button: discord.ui.Button = None):
         if button:
             _ = button  # Ignoriere unused argument warning
@@ -326,7 +326,7 @@ class WishSequentialView(discord.ui.View):
         
         self.clear_items()
         self.add_item(discord.ui.Button(label="❤️ KP eingeben", style=discord.ButtonStyle.primary, custom_id="hp_input"))
-        self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel"))
+        self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel"))
         
         await interaction.response.edit_message(embed=embed, view=self)
     
@@ -363,7 +363,7 @@ class WishSequentialView(discord.ui.View):
         
         self.clear_items()
         self.add_item(TypeSelect(self))
-        self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel", row=1))
+        self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel", row=1))
         
         await interaction.response.edit_message(embed=embed, view=self)
     
@@ -381,7 +381,7 @@ class WishSequentialView(discord.ui.View):
         
         self.clear_items()
         self.add_item(PhaseSelect(self))
-        self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel", row=1))
+        self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel", row=1))
         
         await interaction.response.edit_message(embed=embed, view=self)
     
@@ -400,7 +400,7 @@ class WishSequentialView(discord.ui.View):
         
         self.clear_items()
         self.add_item(RaritySelect(self))
-        self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel", row=1))
+        self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel", row=1))
         
         await interaction.response.edit_message(embed=embed, view=self)
     
@@ -475,7 +475,7 @@ class WishOfferOptionView(discord.ui.View):
         self.wish_data['user'] = interaction.user
         await self.cog.create_final_wish(interaction, self.wish_data)
     
-    @discord.ui.button(label="Abbrechen", style=discord.ButtonStyle.danger, emoji="❌")
+    @discord.ui.button(label="Abbrechen", style=discord.ButtonStyle.secondary, emoji="❌")
     async def cancel_wish(self, interaction: discord.Interaction, button: discord.ui.Button):
         _ = button  # Ignoriere unused argument warning
         embed = discord.Embed(
@@ -584,7 +584,7 @@ class CounterOfferResponseView(discord.ui.View):
             # Falls DM nicht möglich ist, ignoriere es
             pass
     
-    @discord.ui.button(label="Ablehnen", style=discord.ButtonStyle.danger, emoji="❌")
+    @discord.ui.button(label="Ablehnen", style=discord.ButtonStyle.secondary, emoji="❌")
     async def reject_counter_offer(self, interaction: discord.Interaction, button: discord.ui.Button):
         _ = button  # Ignoriere unused argument warning
         
@@ -1160,7 +1160,7 @@ class Pokemon(commands.Cog):
             modal = self.cog.PokemonNameModal(self)
             await interaction.response.send_modal(modal)
         
-        @discord.ui.button(label="Abbrechen", style=discord.ButtonStyle.danger, emoji="❌")
+        @discord.ui.button(label="Abbrechen", style=discord.ButtonStyle.secondary, emoji="❌")
         async def cancel_offer(self, interaction: discord.Interaction, button: discord.ui.Button = None):
             if button:
                 _ = button  # Ignoriere unused argument warning
@@ -1189,7 +1189,7 @@ class Pokemon(commands.Cog):
             # Erstelle View mit KP-Button
             self.clear_items()
             self.add_item(discord.ui.Button(label="❤️ KP eingeben", style=discord.ButtonStyle.primary, custom_id="hp_input"))
-            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel"))
+            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel"))
             
             await interaction.response.edit_message(embed=embed, view=self)
         
@@ -1227,7 +1227,7 @@ class Pokemon(commands.Cog):
             # Erstelle neue View mit Type-Select
             self.clear_items()
             self.add_item(TypeSelect(self))
-            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel", row=1))
+            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel", row=1))
             
             await interaction.response.edit_message(embed=embed, view=self)
         
@@ -1246,7 +1246,7 @@ class Pokemon(commands.Cog):
             # Erstelle neue View mit Phase-Select
             self.clear_items()
             self.add_item(PhaseSelect(self))
-            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel", row=1))
+            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel", row=1))
             
             await interaction.response.edit_message(embed=embed, view=self)
         
@@ -1266,7 +1266,7 @@ class Pokemon(commands.Cog):
             # Erstelle neue View mit Rarity-Select
             self.clear_items()
             self.add_item(RaritySelect(self))
-            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel", row=1))
+            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel", row=1))
             
             await interaction.response.edit_message(embed=embed, view=self)
         
@@ -1465,7 +1465,7 @@ class Pokemon(commands.Cog):
             modal = self.cog.PokemonNameModal(self)
             await interaction.response.send_modal(modal)
         
-        @discord.ui.button(label="Abbrechen", style=discord.ButtonStyle.danger, emoji="❌")
+        @discord.ui.button(label="Abbrechen", style=discord.ButtonStyle.secondary, emoji="❌")
         async def cancel_counter_offer(self, interaction: discord.Interaction, button: discord.ui.Button):
             _ = button  # Ignoriere unused argument warning
             # Gehe zurück zur Angebote-Liste
@@ -1483,7 +1483,7 @@ class Pokemon(commands.Cog):
             
             self.clear_items()
             self.add_item(discord.ui.Button(label="❤️ KP eingeben", style=discord.ButtonStyle.primary, custom_id="hp_input"))
-            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel"))
+            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel"))
             
             await interaction.response.edit_message(embed=embed, view=self)
         
@@ -1508,7 +1508,7 @@ class Pokemon(commands.Cog):
             
             self.clear_items()
             self.add_item(TypeSelect(self))
-            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel", row=1))
+            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel", row=1))
             
             await interaction.response.edit_message(embed=embed, view=self)
         
@@ -1525,7 +1525,7 @@ class Pokemon(commands.Cog):
             
             self.clear_items()
             self.add_item(PhaseSelect(self))
-            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel", row=1))
+            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel", row=1))
             
             await interaction.response.edit_message(embed=embed, view=self)
         
@@ -1543,7 +1543,7 @@ class Pokemon(commands.Cog):
             
             self.clear_items()
             self.add_item(RaritySelect(self))
-            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel", row=1))
+            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel", row=1))
             
             await interaction.response.edit_message(embed=embed, view=self)
         
@@ -1915,7 +1915,7 @@ class Pokemon(commands.Cog):
             modal = self.cog.PokemonNameModal(self)
             await interaction.response.send_modal(modal)
         
-        @discord.ui.button(label="Abbrechen", style=discord.ButtonStyle.danger, emoji="❌")
+        @discord.ui.button(label="Abbrechen", style=discord.ButtonStyle.secondary, emoji="❌")
         async def cancel_offer(self, interaction: discord.Interaction, button: discord.ui.Button):
             _ = button  # Ignoriere unused argument warning
             # Gehe zurück zur Wunsch-Option
@@ -1961,7 +1961,7 @@ class Pokemon(commands.Cog):
             
             self.clear_items()
             self.add_item(discord.ui.Button(label="❤️ KP eingeben", style=discord.ButtonStyle.primary, custom_id="hp_input"))
-            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel"))
+            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel"))
             
             await interaction.response.edit_message(embed=embed, view=self)
         
@@ -1986,7 +1986,7 @@ class Pokemon(commands.Cog):
             
             self.clear_items()
             self.add_item(TypeSelect(self))
-            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel", row=1))
+            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel", row=1))
             
             await interaction.response.edit_message(embed=embed, view=self)
         
@@ -2003,7 +2003,7 @@ class Pokemon(commands.Cog):
             
             self.clear_items()
             self.add_item(PhaseSelect(self))
-            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel", row=1))
+            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel", row=1))
             
             await interaction.response.edit_message(embed=embed, view=self)
         
@@ -2021,7 +2021,7 @@ class Pokemon(commands.Cog):
             
             self.clear_items()
             self.add_item(RaritySelect(self))
-            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.danger, custom_id="cancel", row=1))
+            self.add_item(discord.ui.Button(label="❌ Abbrechen", style=discord.ButtonStyle.secondary, custom_id="cancel", row=1))
             
             await interaction.response.edit_message(embed=embed, view=self)
         
