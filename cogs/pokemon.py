@@ -1072,6 +1072,263 @@ class Pokemon(commands.Cog):
         
     
     
+    class ErrorReportModal(discord.ui.Modal):
+        """Modal für Fehler-Meldungen"""
+        
+        def __init__(self, cog):
+            super().__init__(title="🐛 Fehler melden")
+            self.cog = cog
+            
+            self.error_title = discord.ui.TextInput(
+                label="Fehler-Titel",
+                placeholder="Kurze Beschreibung des Fehlers...",
+                required=True,
+                max_length=100
+            )
+            self.add_item(self.error_title)
+            
+            self.error_description = discord.ui.TextInput(
+                label="Detaillierte Beschreibung",
+                placeholder="Beschreibe den Fehler so genau wie möglich...",
+                style=discord.TextStyle.paragraph,
+                required=True,
+                max_length=1000
+            )
+            self.add_item(self.error_description)
+            
+            self.steps_to_reproduce = discord.ui.TextInput(
+                label="Was hast du gemacht?",
+                placeholder="Welchen Befehl oder welche Aktion hast du ausgeführt?",
+                style=discord.TextStyle.paragraph,
+                required=False,
+                max_length=500
+            )
+            self.add_item(self.steps_to_reproduce)
+        
+        async def on_submit(self, interaction: discord.Interaction):
+            """Verarbeite die Fehler-Meldung"""
+            
+            # Erstelle ein Embed für die Fehler-Meldung
+            embed = discord.Embed(
+                title="🐛 Neue Fehler-Meldung",
+                description=self.error_description.value,
+                color=0xe74c3c,
+                timestamp=discord.utils.utcnow()
+            )
+            
+            embed.add_field(
+                name="Fehler-Titel",
+                value=self.error_title.value,
+                inline=False
+            )
+            
+            if self.steps_to_reproduce.value:
+                embed.add_field(
+                    name="Schritte zum Reproduzieren",
+                    value=self.steps_to_reproduce.value,
+                    inline=False
+                )
+            
+            embed.add_field(
+                name="Gemeldet von",
+                value=f"{interaction.user.mention} ({interaction.user.name})",
+                inline=True
+            )
+            
+            embed.add_field(
+                name="User ID",
+                value=interaction.user.id,
+                inline=True
+            )
+            
+            embed.add_field(
+                name="Server",
+                value=interaction.guild.name if interaction.guild else "DM",
+                inline=True
+            )
+            
+            embed.set_footer(text=f"Fehler-ID: {interaction.id}")
+            
+            # Versuche, die Meldung an einen designierten Kanal zu senden
+            # Falls ein ERROR_REPORT_CHANNEL_ID in der Umgebung gesetzt ist
+            import os
+            import logging
+            logger = logging.getLogger(__name__)
+            
+            error_channel_id = os.getenv('ERROR_REPORT_CHANNEL_ID')
+            sent_to_channel = False
+            
+            logger.info(f"ERROR_REPORT_CHANNEL_ID aus .env: {error_channel_id}")
+            
+            if error_channel_id:
+                try:
+                    error_channel = self.cog.bot.get_channel(int(error_channel_id))
+                    logger.info(f"Kanal gefunden: {error_channel}")
+                    
+                    if error_channel:
+                        await error_channel.send(embed=embed)
+                        sent_to_channel = True
+                        logger.info(f"✅ Fehler-Meldung erfolgreich an Kanal {error_channel.name} gesendet")
+                    else:
+                        logger.warning(f"⚠️ Kanal mit ID {error_channel_id} wurde nicht gefunden!")
+                except ValueError as e:
+                    logger.error(f"❌ Ungültige Channel-ID: {e}")
+                except discord.Forbidden as e:
+                    logger.error(f"❌ Keine Berechtigung zum Schreiben in Kanal: {e}")
+                except discord.HTTPException as e:
+                    logger.error(f"❌ Discord API Fehler: {e}")
+            else:
+                logger.warning("⚠️ ERROR_REPORT_CHANNEL_ID nicht in .env gesetzt")
+            
+            # Sende eine Bestätigung an den User
+            confirmation_embed = discord.Embed(
+                title="✅ Fehler gemeldet",
+                description="Vielen Dank für deine Fehler-Meldung!" + 
+                           (" Das Entwickler-Team wurde benachrichtigt." if sent_to_channel else ""),
+                color=0x2ecc71
+            )
+            
+            confirmation_embed.add_field(
+                name="Deine Meldung",
+                value=self.error_title.value,
+                inline=False
+            )
+            
+            confirmation_embed.set_footer(text="Wir werden uns so schnell wie möglich darum kümmern!")
+            
+            await interaction.response.send_message(embed=confirmation_embed, ephemeral=True)
+    
+    class IdeaSuggestionModal(discord.ui.Modal):
+        """Modal für Ideen-Vorschläge"""
+        
+        def __init__(self, cog):
+            super().__init__(title="💡 Idee vorschlagen")
+            self.cog = cog
+            
+            self.idea_title = discord.ui.TextInput(
+                label="Ideen-Titel",
+                placeholder="Kurze Beschreibung deiner Idee...",
+                required=True,
+                max_length=100
+            )
+            self.add_item(self.idea_title)
+            
+            self.idea_description = discord.ui.TextInput(
+                label="Detaillierte Beschreibung",
+                placeholder="Beschreibe deine Idee so genau wie möglich...",
+                style=discord.TextStyle.paragraph,
+                required=True,
+                max_length=1000
+            )
+            self.add_item(self.idea_description)
+            
+            self.idea_benefit = discord.ui.TextInput(
+                label="Warum wäre das nützlich?",
+                placeholder="Welchen Nutzen hätte diese Funktion?",
+                style=discord.TextStyle.paragraph,
+                required=False,
+                max_length=500
+            )
+            self.add_item(self.idea_benefit)
+        
+        async def on_submit(self, interaction: discord.Interaction):
+            """Verarbeite den Ideen-Vorschlag"""
+            
+            # Erstelle ein Embed für den Ideen-Vorschlag
+            embed = discord.Embed(
+                title="💡 Neuer Ideen-Vorschlag",
+                description=self.idea_description.value,
+                color=0xf39c12,
+                timestamp=discord.utils.utcnow()
+            )
+            
+            embed.add_field(
+                name="Ideen-Titel",
+                value=self.idea_title.value,
+                inline=False
+            )
+            
+            if self.idea_benefit.value:
+                embed.add_field(
+                    name="Nutzen",
+                    value=self.idea_benefit.value,
+                    inline=False
+                )
+            
+            embed.add_field(
+                name="Vorgeschlagen von",
+                value=f"{interaction.user.mention} ({interaction.user.name})",
+                inline=True
+            )
+            
+            embed.add_field(
+                name="User ID",
+                value=interaction.user.id,
+                inline=True
+            )
+            
+            embed.add_field(
+                name="Server",
+                value=interaction.guild.name if interaction.guild else "DM",
+                inline=True
+            )
+            
+            embed.set_footer(text=f"Ideen-ID: {interaction.id}")
+            
+            # Versuche, die Idee an einen designierten Kanal zu senden
+            # Falls ein IDEA_CHANNEL_ID in der Umgebung gesetzt ist
+            import os
+            import logging
+            logger = logging.getLogger(__name__)
+            
+            idea_channel_id = os.getenv('IDEA_CHANNEL_ID')
+            sent_to_channel = False
+            
+            # Fallback zum ERROR_REPORT_CHANNEL_ID falls IDEA_CHANNEL_ID nicht gesetzt
+            if not idea_channel_id:
+                idea_channel_id = os.getenv('ERROR_REPORT_CHANNEL_ID')
+                logger.info("IDEA_CHANNEL_ID nicht gesetzt, verwende ERROR_REPORT_CHANNEL_ID")
+            
+            logger.info(f"Ideen-Kanal-ID aus .env: {idea_channel_id}")
+            
+            if idea_channel_id:
+                try:
+                    idea_channel = self.cog.bot.get_channel(int(idea_channel_id))
+                    logger.info(f"Kanal gefunden: {idea_channel}")
+                    
+                    if idea_channel:
+                        await idea_channel.send(embed=embed)
+                        sent_to_channel = True
+                        logger.info(f"✅ Ideen-Vorschlag erfolgreich an Kanal {idea_channel.name} gesendet")
+                    else:
+                        logger.warning(f"⚠️ Kanal mit ID {idea_channel_id} wurde nicht gefunden!")
+                except ValueError as e:
+                    logger.error(f"❌ Ungültige Channel-ID: {e}")
+                except discord.Forbidden as e:
+                    logger.error(f"❌ Keine Berechtigung zum Schreiben in Kanal: {e}")
+                except discord.HTTPException as e:
+                    logger.error(f"❌ Discord API Fehler: {e}")
+            else:
+                logger.warning("⚠️ Weder IDEA_CHANNEL_ID noch ERROR_REPORT_CHANNEL_ID in .env gesetzt")
+            
+            # Sende eine Bestätigung an den User
+            confirmation_embed = discord.Embed(
+                title="✅ Idee eingereicht",
+                description="Vielen Dank für deinen Vorschlag!" + 
+                           (" Das Entwickler-Team wird ihn prüfen." if sent_to_channel else ""),
+                color=0x2ecc71
+            )
+            
+            confirmation_embed.add_field(
+                name="Deine Idee",
+                value=self.idea_title.value,
+                inline=False
+            )
+            
+            confirmation_embed.set_footer(text="Wir freuen uns über dein Feedback!")
+            
+            await interaction.response.send_message(embed=confirmation_embed, ephemeral=True)
+    
     class PokemonNameModal(discord.ui.Modal):
         """Modal für Pokemon-Name Eingabe"""
         
@@ -2262,7 +2519,7 @@ class Pokemon(commands.Cog):
                 value="`!bieten` - Pokemon anbieten\n"
                       "`!angebote` - Verfügbare Angebote anzeigen\n"
                       "`!wünschen` - Pokemon-Wunsch erstellen\n"
-                      "`!pokemon_help` - Vollständige Hilfe",
+                      "`!help` - Vollständige Hilfe",
                 inline=False
             )
             
@@ -2335,7 +2592,9 @@ class Pokemon(commands.Cog):
                   "`!angebote` - Zeige alle verfügbaren Angebote\n"
                   "`!wünschen` - Erstelle einen Pokemon-Wunsch (optional mit Tauschangebot)\n"
                   "`!wünsche` - Zeige alle verfügbaren Pokemon-Wünsche\n"
-                  "`!pokemon_help` - Zeige diese Hilfe",
+                  "`!fehler` - Melde einen Fehler im Bot\n"
+                  "`!ideen` - Schlage eine neue Idee vor\n"
+                  "`!help` - Zeige diese Hilfe",
             inline=False
         )
         
@@ -2375,6 +2634,163 @@ class Pokemon(commands.Cog):
         embed.set_footer(text="Viel Spaß beim Pokemon-Tauschen! 🎉")
         
         await ctx.send(embed=embed)
+        await ctx.message.delete()
+    
+    @commands.command(name='test_fehler_kanal')
+    @commands.has_permissions(administrator=True)
+    async def test_error_channel(self, ctx):
+        """Teste die Fehler-Kanal Konfiguration (nur für Admins)"""
+        import os
+        
+        error_channel_id = os.getenv('ERROR_REPORT_CHANNEL_ID')
+        
+        embed = discord.Embed(
+            title="🔧 Fehler-Kanal Test",
+            color=0x3498db
+        )
+        
+        if error_channel_id:
+            embed.add_field(
+                name="Channel-ID in .env",
+                value=f"`{error_channel_id}`",
+                inline=False
+            )
+            
+            try:
+                error_channel = self.bot.get_channel(int(error_channel_id))
+                
+                if error_channel:
+                    embed.add_field(
+                        name="✅ Status",
+                        value=f"Kanal gefunden: {error_channel.mention}\nName: `{error_channel.name}`",
+                        inline=False
+                    )
+                    
+                    # Versuche eine Test-Nachricht zu senden
+                    try:
+                        test_embed = discord.Embed(
+                            title="🧪 Test-Nachricht",
+                            description="Dies ist eine Test-Nachricht vom Fehler-Meldungs-System.",
+                            color=0x95a5a6
+                        )
+                        await error_channel.send(embed=test_embed)
+                        embed.add_field(
+                            name="📤 Test-Nachricht",
+                            value="✅ Erfolgreich gesendet!",
+                            inline=False
+                        )
+                    except discord.Forbidden:
+                        embed.add_field(
+                            name="❌ Berechtigungsfehler",
+                            value="Der Bot hat keine Berechtigung, in diesem Kanal zu schreiben!",
+                            inline=False
+                        )
+                    except Exception as e:
+                        embed.add_field(
+                            name="❌ Fehler",
+                            value=f"Fehler beim Senden: {str(e)}",
+                            inline=False
+                        )
+                else:
+                    embed.add_field(
+                        name="❌ Status",
+                        value=f"Kanal mit ID `{error_channel_id}` wurde nicht gefunden!\n\n"
+                              "Mögliche Ursachen:\n"
+                              "• Falsche Channel-ID\n"
+                              "• Bot ist nicht auf dem Server\n"
+                              "• Kanal wurde gelöscht",
+                        inline=False
+                    )
+            except ValueError:
+                embed.add_field(
+                    name="❌ Fehler",
+                    value=f"`{error_channel_id}` ist keine gültige Channel-ID!",
+                    inline=False
+                )
+        else:
+            embed.add_field(
+                name="⚠️ Nicht konfiguriert",
+                value="ERROR_REPORT_CHANNEL_ID ist nicht in der .env Datei gesetzt!",
+                inline=False
+            )
+        
+        await ctx.send(embed=embed)
+        await ctx.message.delete()
+    
+    @commands.command(name='fehler')
+    async def report_error(self, ctx):
+        """Melde einen Fehler im Bot"""
+        
+        # Da wir einen Context haben (nicht Interaction), müssen wir einen View mit Button erstellen
+        class ErrorReportView(discord.ui.View):
+            def __init__(self, cog):
+                super().__init__(timeout=300)
+                self.cog = cog
+            
+            @discord.ui.button(label="Fehler melden", style=discord.ButtonStyle.danger, emoji="🐛")
+            async def report_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+                """Öffne das Fehler-Meldung Modal"""
+                _ = button  # Unterdrücke unused variable warning
+                modal = self.cog.ErrorReportModal(self.cog)
+                await interaction.response.send_modal(modal)
+        
+        embed = discord.Embed(
+            title="🐛 Fehler melden",
+            description="Hast du einen Fehler im Bot gefunden? Klicke auf den Button unten, um ihn zu melden!",
+            color=0xe74c3c
+        )
+        
+        embed.add_field(
+            name="Was sollte ich melden?",
+            value="• Bugs und technische Fehler\n"
+                  "• Befehle, die nicht funktionieren\n"
+                  "• Unerwartetes Verhalten\n"
+                  "• Anzeigeprobleme",
+            inline=False
+        )
+        
+        embed.set_footer(text="Vielen Dank für deine Hilfe, den Bot zu verbessern!")
+        
+        view = ErrorReportView(self)
+        await ctx.send(embed=embed, view=view)
+        await ctx.message.delete()
+    
+    @commands.command(name='ideen')
+    async def suggest_idea(self, ctx):
+        """Schlage eine Idee für den Bot vor"""
+        
+        # Da wir einen Context haben (nicht Interaction), müssen wir einen View mit Button erstellen
+        class IdeaView(discord.ui.View):
+            def __init__(self, cog):
+                super().__init__(timeout=300)
+                self.cog = cog
+            
+            @discord.ui.button(label="Idee vorschlagen", style=discord.ButtonStyle.primary, emoji="💡")
+            async def idea_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+                """Öffne das Ideen-Vorschlag Modal"""
+                _ = button  # Unterdrücke unused variable warning
+                modal = self.cog.IdeaSuggestionModal(self.cog)
+                await interaction.response.send_modal(modal)
+        
+        embed = discord.Embed(
+            title="💡 Idee vorschlagen",
+            description="Hast du eine Idee für ein neues Feature? Teile sie mit uns!",
+            color=0xf39c12
+        )
+        
+        embed.add_field(
+            name="Was kann ich vorschlagen?",
+            value="• Neue Features und Befehle\n"
+                  "• Verbesserungsvorschläge\n"
+                  "• UI/UX Optimierungen\n"
+                  "• Neue Pokemon-Funktionen",
+            inline=False
+        )
+        
+        embed.set_footer(text="Wir freuen uns über deine kreativen Ideen!")
+        
+        view = IdeaView(self)
+        await ctx.send(embed=embed, view=view)
         await ctx.message.delete()
     
     def create_wish_counter_offer_view(self, target_wish, responding_user):

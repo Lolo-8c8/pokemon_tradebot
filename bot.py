@@ -21,9 +21,10 @@ logger = logging.getLogger(__name__)
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
+intents.presences = True  # Für Online/Offline-Status
 
-# Create bot instance
-bot = commands.Bot(command_prefix='!', intents=intents)
+# Create bot instance (without default help command)
+bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
 @bot.event
 async def on_ready():
@@ -33,7 +34,7 @@ async def on_ready():
     logger.info(f'👥 Serving {len(bot.users)} users')
     
     # Set bot status
-    activity = discord.Game(name="Pokemon Trading | !bieten | !pokemon_help")
+    activity = discord.Game(name="Pokemon Trading | !help | !bieten")
     await bot.change_presence(activity=activity)
     
     # Log loaded cogs
@@ -58,6 +59,189 @@ async def ping(ctx):
     await ctx.send(f'Pong! Latency: {latency}ms')
     await ctx.message.delete()
 
+@bot.command(name='help')
+async def help_command(ctx):
+    """Zeige alle verfügbaren Befehle"""
+    embed = discord.Embed(
+        title="🎮 Pokemon Trade Bot - Hilfe",
+        description="Willkommen beim Pokemon Trading Bot! Hier sind alle verfügbaren Befehle:",
+        color=0x3498db
+    )
+    
+    # Pokemon Trading Befehle
+    embed.add_field(
+        name="🔥 Pokemon-Trading",
+        value=(
+            "`!bieten` - Biete ein Pokemon zum Tausch an\n"
+            "`!angebote` - Zeige alle verfügbaren Angebote\n"
+            "`!wünschen` - Erstelle einen Pokemon-Wunsch\n"
+            "`!wünsche` - Zeige alle Pokemon-Wünsche"
+        ),
+        inline=False
+    )
+    
+    # Hilfe & Feedback
+    embed.add_field(
+        name="💬 Hilfe & Feedback",
+        value=(
+            "`!pokemon_help` - Detaillierte Pokemon-System Hilfe\n"
+            "`!fehler` - Melde einen Fehler im Bot\n"
+            "`!ideen` - Schlage eine neue Idee vor\n"
+            "`!help` - Zeige diese Hilfe"
+        ),
+        inline=False
+    )
+    
+    embed.set_footer(
+        text=f"Bot erstellt für Pokemon-Trading | Prefix: ! | Latenz: {round(bot.latency * 1000)}ms",
+        icon_url=bot.user.avatar.url if bot.user.avatar else None
+    )
+    embed.set_thumbnail(url=bot.user.avatar.url if bot.user.avatar else None)
+    
+    await ctx.send(embed=embed)
+    try:
+        await ctx.message.delete()
+    except:
+        pass  # Ignoriere Fehler beim Löschen der Nachricht
+
+@bot.command(name='admin_help')
+@commands.has_permissions(administrator=True)
+async def admin_help_command(ctx):
+    """Zeige Admin-Befehle und erweiterte Informationen"""
+    embed = discord.Embed(
+        title="🔧 Admin-Hilfe",
+        description="Erweiterte Befehle und Informationen für Administratoren",
+        color=0xe74c3c
+    )
+    
+    # Bot Information
+    embed.add_field(
+        name="ℹ️ Bot Information",
+        value=(
+            "`!info` - Zeige Bot-Statistiken\n"
+            "`!ping` - Prüfe Bot-Latenz\n"
+            "`!admin_help` - Zeige diese Admin-Hilfe"
+        ),
+        inline=False
+    )
+    
+    # Admin Befehle
+    embed.add_field(
+        name="🔧 Admin-Befehle",
+        value=(
+            "`!test_fehler_kanal` - Teste Fehler-Kanal Konfiguration\n"
+            "`!user` - Zeige alle User auf dem Server"
+        ),
+        inline=False
+    )
+    
+    # Nützliche Links & Tipps
+    embed.add_field(
+        name="🔗 Nützliche Informationen",
+        value=(
+            "• Fehler-Meldungen gehen an den konfigurierten Kanal\n"
+            "• Ideen-Vorschläge werden ebenfalls weitergeleitet\n"
+            "• Bot-Status kann in der Konsole überwacht werden"
+        ),
+        inline=False
+    )
+    
+    # Statistiken
+    embed.add_field(
+        name="📊 Live-Statistiken",
+        value=(
+            f"**Server:** {len(bot.guilds)}\n"
+            f"**Benutzer:** {len(bot.users)}\n"
+            f"**Latenz:** {round(bot.latency * 1000)}ms"
+        ),
+        inline=False
+    )
+    
+    embed.set_footer(
+        text=f"Nur für Administratoren | Bot ID: {bot.user.id}",
+        icon_url=bot.user.avatar.url if bot.user.avatar else None
+    )
+    embed.set_thumbnail(url=bot.user.avatar.url if bot.user.avatar else None)
+    
+    await ctx.send(embed=embed)
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+@bot.command(name='user')
+@commands.has_permissions(administrator=True)
+async def list_users(ctx):
+    """Zeige alle User auf dem Server (nur für Admins)"""
+    guild = ctx.guild
+    
+    if not guild:
+        await ctx.send("Dieser Befehl kann nur auf einem Server verwendet werden!")
+        return
+    
+    # Sortiere User nach Namen
+    members = sorted(guild.members, key=lambda m: m.name.lower())
+    
+    # Filtere Bots aus (nur Menschen zeigen)
+    humans = [m for m in members if not m.bot]
+    bots = [m for m in members if m.bot]
+    
+    embed = discord.Embed(
+        title=f"👥 User-Liste - {guild.name}",
+        description=f"Insgesamt **{len(humans)}** Menschen auf diesem Server",
+        color=0x3498db
+    )
+    
+    # Statistiken über Menschen
+    online_humans = [m for m in humans if m.status != discord.Status.offline]
+    offline_humans = [m for m in humans if m.status == discord.Status.offline]
+    
+    # Statistiken
+    embed.add_field(
+        name="📊 Statistiken",
+        value=(
+            f"👤 Menschen: **{len(humans)}**\n"
+            f"🤖 Bots: **{len(bots)}** (versteckt)\n"
+            f"🟢 Online: **{len(online_humans)}**\n"
+            f"⚫ Offline: **{len(offline_humans)}**"
+        ),
+        inline=False
+    )
+    
+    # Zeige nur Menschen in der User-Liste (maximal 20 pro Nachricht)
+    user_list = []
+    for i, member in enumerate(humans[:20], 1):
+        status_emoji = "🟢" if member.status != discord.Status.offline else "⚫"
+        user_list.append(f"{status_emoji} {member.name} ({member.mention})")
+    
+    if user_list:
+        embed.add_field(
+            name=f"👥 Echte User (Zeige {min(20, len(humans))} von {len(humans)})",
+            value="\n".join(user_list),
+            inline=False
+        )
+    
+    if len(humans) > 20:
+        embed.add_field(
+            name="ℹ️ Hinweis",
+            value=f"Es werden nur die ersten 20 User angezeigt. Insgesamt gibt es {len(humans)} Menschen.",
+            inline=False
+        )
+    
+    embed.set_footer(
+        text=f"Server ID: {guild.id} | Abgefragt von {ctx.author.name}",
+        icon_url=guild.icon.url if guild.icon else None
+    )
+    
+    if guild.icon:
+        embed.set_thumbnail(url=guild.icon.url)
+    
+    await ctx.send(embed=embed)
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
 @bot.command(name='info')
 async def info(ctx):
     """Display bot information"""
@@ -72,7 +256,10 @@ async def info(ctx):
     embed.set_footer(text=f"Bot ID: {bot.user.id}")
     
     await ctx.send(embed=embed)
-    await ctx.message.delete()
+    try:
+        await ctx.message.delete()
+    except:
+        pass
 
 # Load cogs
 async def load_cogs():
