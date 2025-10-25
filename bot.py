@@ -208,23 +208,23 @@ async def list_users(ctx):
         inline=False
     )
     
-    # Zeige nur Menschen in der User-Liste (maximal 20 pro Nachricht)
+    # Zeige nur Menschen in der User-Liste (maximal 15 pro Nachricht)
     user_list = []
-    for i, member in enumerate(humans[:20], 1):
+    for i, member in enumerate(humans[:15], 1):
         status_emoji = "🟢" if member.status != discord.Status.offline else "⚫"
         user_list.append(f"{status_emoji} {member.name} ({member.mention})")
     
     if user_list:
         embed.add_field(
-            name=f"👥 Echte User (Zeige {min(20, len(humans))} von {len(humans)})",
+            name=f"👥 Echte User (Zeige {min(15, len(humans))} von {len(humans)})",
             value="\n".join(user_list),
             inline=False
         )
     
-    if len(humans) > 20:
+    if len(humans) > 15:
         embed.add_field(
             name="ℹ️ Hinweis",
-            value=f"Es werden nur die ersten 20 User angezeigt. Insgesamt gibt es {len(humans)} Menschen.",
+            value=f"Es werden nur die ersten 15 User angezeigt. Insgesamt gibt es {len(humans)} Menschen.",
             inline=False
         )
     
