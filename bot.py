@@ -39,6 +39,13 @@ async def on_ready():
     
     # Log loaded cogs
     logger.info(f'🔧 Loaded cogs: {list(bot.cogs.keys())}')
+    
+    # Sync slash commands
+    try:
+        synced = await bot.tree.sync()
+        logger.info(f'✅ Synced {len(synced)} slash command(s)')
+    except Exception as e:
+        logger.error(f'❌ Failed to sync slash commands: {e}')
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -76,6 +83,17 @@ async def help_command(ctx):
             "`!angebote` - Zeige alle verfügbaren Angebote\n"
             "`!wünschen` - Erstelle einen Pokemon-Wunsch\n"
             "`!wünsche` - Zeige alle Pokemon-Wünsche"
+        ),
+        inline=False
+    )
+    
+    # TCG Trading Befehle (Slash Commands)
+    embed.add_field(
+        name="🎴 TCG-Karten Trading (Slash Commands)",
+        value=(
+            "`/anbieten-tcg` - Biete eine Pokemon TCG-Karte zum Tausch an\n"
+            "`/wünschen-tcg` - Erstelle einen Wunsch für eine Pokemon TCG-Karte\n"
+            "\n*TCG-Commands nutzen echte Kartendaten aus der TCGdx API*"
         ),
         inline=False
     )

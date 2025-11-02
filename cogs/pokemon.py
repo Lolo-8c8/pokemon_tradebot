@@ -1,5 +1,7 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
+from .tcgdex_service import TCGdexService
 
 class TypeSelect(discord.ui.Select):
     """Dropdown für Pokemon-Typ Auswahl"""
@@ -157,8 +159,35 @@ class OfferSelect(discord.ui.Select):
         embed.add_field(name="📛 Pokemon", value=f"**{selected_offer['name']}**", inline=True)
         embed.add_field(name="❤️ KP", value=f"**{selected_offer['hp']}**", inline=True)
         embed.add_field(name="🏷️ Typ", value=f"{type_emoji} **{selected_offer['type']}**", inline=True)
-        embed.add_field(name="🔄 Phase", value=f"{phase_emoji} **{selected_offer['phase']}**", inline=True)
-        embed.add_field(name="💎 Seltenheit", value=f"{rarity_emoji} **{selected_offer['rarity']}**", inline=True)
+        
+        # TCG-spezifische Informationen anzeigen
+        if selected_offer.get('is_tcg', False):
+            embed.add_field(name="🎴 Typ", value="TCG-Karte", inline=True)
+            # Cardmarket-Preis falls verfügbar
+            price = selected_offer.get('cardmarket_price')
+            if price:
+                embed.add_field(name="💰 Cardmarket Preis", value=f"€{price:.2f}", inline=True)
+            # Set-Informationen
+            set_info = f"Set: {selected_offer.get('tcg_set_id', 'Unbekannt')}"
+            card_num = selected_offer.get('tcg_card_number', '')
+            if card_num:
+                set_info += f" | #{card_num}"
+            embed.add_field(name="📦 TCG-Info", value=set_info, inline=True)
+            
+            # Kartenbild hinzufügen
+            image_url = selected_offer.get('tcg_image_url', '')
+            if image_url:
+                embed.set_image(url=image_url)
+            
+            # Set-Symbol als Thumbnail
+            symbol_url = selected_offer.get('tcg_set_symbol', '')
+            if symbol_url:
+                embed.set_thumbnail(url=symbol_url)
+        else:
+            # Normale Pokemon-Info
+            embed.add_field(name="🔄 Phase", value=f"{phase_emoji} **{selected_offer['phase']}**", inline=True)
+            embed.add_field(name="💎 Seltenheit", value=f"{rarity_emoji} **{selected_offer['rarity']}**", inline=True)
+        
         embed.add_field(name="👤 Anbieter", value=selected_offer['user'].mention, inline=True)
         
         embed.add_field(
@@ -719,25 +748,67 @@ class WishSelect(discord.ui.Select):
         embed.add_field(name="📛 Gesuchtes Pokemon", value=f"**{selected_wish['name']}**", inline=True)
         embed.add_field(name="❤️ KP", value=f"**{selected_wish['hp']}**", inline=True)
         embed.add_field(name="🏷️ Typ", value=f"{type_emoji} **{selected_wish['type']}**", inline=True)
-        embed.add_field(name="🔄 Phase", value=f"{phase_emoji} **{selected_wish['phase']}**", inline=True)
-        embed.add_field(name="💎 Seltenheit", value=f"{rarity_emoji} **{selected_wish['rarity']}**", inline=True)
+        
+        # TCG-spezifische Informationen anzeigen
+        if selected_wish.get('is_tcg', False):
+            embed.add_field(name="🎴 Typ", value="TCG-Karte", inline=True)
+            # Cardmarket-Preis falls verfügbar
+            price = selected_wish.get('cardmarket_price')
+            if price:
+                embed.add_field(name="💰 Cardmarket Preis", value=f"€{price:.2f}", inline=True)
+            # Set-Informationen
+            set_info = f"Set: {selected_wish.get('tcg_set_id', 'Unbekannt')}"
+            card_num = selected_wish.get('tcg_card_number', '')
+            if card_num:
+                set_info += f" | #{card_num}"
+            embed.add_field(name="📦 TCG-Info", value=set_info, inline=True)
+            
+            # Kartenbild hinzufügen
+            image_url = selected_wish.get('tcg_image_url', '')
+            if image_url:
+                embed.set_image(url=image_url)
+            
+            # Set-Symbol als Thumbnail
+            symbol_url = selected_wish.get('tcg_set_symbol', '')
+            if symbol_url:
+                embed.set_thumbnail(url=symbol_url)
+        else:
+            # Normale Pokemon-Info
+            embed.add_field(name="🔄 Phase", value=f"{phase_emoji} **{selected_wish['phase']}**", inline=True)
+            embed.add_field(name="💎 Seltenheit", value=f"{rarity_emoji} **{selected_wish['rarity']}**", inline=True)
+        
         embed.add_field(name="👤 Wünschender", value=selected_wish['user'].mention, inline=True)
         
         # Zeige Tauschangebot-Info falls vorhanden
         if selected_wish.get('offer_included', False) and selected_wish.get('offer_data'):
             offer_data = selected_wish['offer_data']
-            offer_type_emoji = next((emoji for emoji, name in self.cog.pokemon_types.items() if name == offer_data['type']), "")
-            offer_phase_emoji = next((emoji for emoji, name in self.cog.pokemon_phases.items() if name == offer_data['phase']), "")
-            offer_rarity_emoji = next((emoji for emoji, name in self.cog.rarity_levels.items() if name == offer_data['rarity']), "")
             
-            embed.add_field(
-                name="🎮 Angebotenes Pokemon",
-                value=f"**{offer_data['name']}** ({offer_data['hp']} KP)\n"
-                      f"{offer_type_emoji} {offer_data['type']} | "
-                      f"{offer_phase_emoji} {offer_data['phase']} | "
-                      f"{offer_rarity_emoji} {offer_data['rarity']}",
-                inline=False
-            )
+            # Prüfe ob Angebot auch TCG ist
+            if offer_data.get('is_tcg', False):
+                offer_price = offer_data.get('cardmarket_price')
+                offer_info = f"**{offer_data['name']}**"
+                if offer_data.get('hp'):
+                    offer_info += f" ({offer_data['hp']} KP)"
+                if offer_price:
+                    offer_info += f" | €{offer_price:.2f}"
+                embed.add_field(
+                    name="🎮 Angebotene TCG-Karte",
+                    value=offer_info,
+                    inline=False
+                )
+            else:
+                offer_type_emoji = next((emoji for emoji, name in self.cog.pokemon_types.items() if name == offer_data['type']), "")
+                offer_phase_emoji = next((emoji for emoji, name in self.cog.pokemon_phases.items() if name == offer_data['phase']), "")
+                offer_rarity_emoji = next((emoji for emoji, name in self.cog.rarity_levels.items() if name == offer_data['rarity']), "")
+                
+                embed.add_field(
+                    name="🎮 Angebotenes Pokemon",
+                    value=f"**{offer_data['name']}** ({offer_data['hp']} KP)\n"
+                          f"{offer_type_emoji} {offer_data['type']} | "
+                          f"{offer_phase_emoji} {offer_data['phase']} | "
+                          f"{offer_rarity_emoji} {offer_data['rarity']}",
+                    inline=False
+                )
         
         embed.add_field(
             name="🔄 Nächster Schritt",
@@ -1018,11 +1089,851 @@ class WishWithOfferResponseView(discord.ui.View):
         cog = interaction.client.get_cog('Pokemon')
         await cog.show_wishes_list(interaction, is_refresh=True)
 
+# ============= TCG Views und Modals =============
+
+class TCGSetSelect(discord.ui.Select):
+    """Dropdown für TCG Set-Auswahl"""
+    
+    def __init__(self, view, sets_data):
+        self.tcg_view = view
+        options = []
+        
+        # Erstelle Optionen für jedes Set
+        for set_data in sets_data[:25]:  # Discord erlaubt max 25 Optionen
+            set_name = set_data.get("name", "Unbekanntes Set")
+            set_id = set_data.get("id", "")
+            
+            # Prüfe ob Set ein Symbol/Logo hat
+            has_symbol = False
+            symbol_url = ""
+            if isinstance(set_data, dict):
+                symbol_url = (set_data.get("symbol", "") or 
+                             set_data.get("logo", "") or
+                             set_data.get("symbolUrl", "") or
+                             set_data.get("logoUrl", ""))
+                if not symbol_url:
+                    images = set_data.get("images", {})
+                    if isinstance(images, dict):
+                        symbol_url = (images.get("symbol", "") or 
+                                     images.get("logo", "") or
+                                     images.get("symbolUrl", "") or
+                                     images.get("logoUrl", ""))
+                if not symbol_url:
+                    icon = set_data.get("icon", {})
+                    if isinstance(icon, dict):
+                        symbol_url = icon.get("url", "") or icon.get("symbol", "") or icon.get("logo", "")
+                    elif isinstance(icon, str):
+                        symbol_url = icon
+                
+                has_symbol = bool(symbol_url)
+            
+            # Erstelle Label (max 100 Zeichen)
+            label = set_name
+            if len(label) > 100:
+                label = label[:97] + "..."
+            
+            # Erstelle Description mit Info über Symbol (falls vorhanden)
+            # Hinweis: Discord unterstützt keine Bilder in SelectOptions, nur Emojis
+            description = f"Set ID: {set_id}"
+            if has_symbol:
+                description += " | 🖼️ Symbol verfügbar"
+            if len(description) > 100:
+                description = description[:97] + "..."
+            
+            # Verwende unterschiedliche Emojis basierend auf ob Symbol vorhanden ist
+            emoji = "🖼️" if has_symbol else "📦"
+            
+            options.append(discord.SelectOption(
+                label=label,
+                value=set_id,
+                description=description,
+                emoji=emoji
+            ))
+        
+        super().__init__(
+            placeholder="Wähle ein Set aus...",
+            options=options,
+            custom_id="tcg_set_select"
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        selected_set_id = self.values[0]
+        # Finde das ausgewählte Set
+        selected_set = None
+        for set_data in self.tcg_view.sets_data:
+            if set_data.get("id") == selected_set_id:
+                selected_set = set_data
+                break
+        
+        if selected_set:
+            self.tcg_view.selected_set = selected_set
+            self.tcg_view.selected_set_id = selected_set_id
+            await self.tcg_view.show_card_number_input(interaction)
+
+class TCGYearInputView(discord.ui.View):
+    """View mit Button für Jahr-Eingabe"""
+    
+    def __init__(self, cog, is_wish=False):
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.is_wish = is_wish
+    
+    @discord.ui.button(label="Jahr eingeben", style=discord.ButtonStyle.primary, emoji="📅")
+    async def enter_year(self, interaction: discord.Interaction, button: discord.ui.Button):
+        _ = button  # Ignoriere unused argument warning
+        # Öffne Modal für Jahr-Eingabe
+        modal = TCGYearModal(self.cog, self.is_wish)
+        await interaction.response.send_modal(modal)
+
+class TCGYearModal(discord.ui.Modal):
+    """Modal für Jahr-Eingabe"""
+    
+    def __init__(self, cog, is_wish=False):
+        super().__init__(title="Jahr eingeben")
+        self.cog = cog
+        self.is_wish = is_wish
+        
+        self.year_input = discord.ui.TextInput(
+            label="Erscheinungsjahr",
+            placeholder="z.B. 2023, 2022, 2021",
+            required=True,
+            max_length=4,
+            min_length=4,
+            style=discord.TextStyle.short
+        )
+        self.add_item(self.year_input)
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        year_str = self.year_input.value.strip()
+        
+        # Validiere Jahr
+        try:
+            jahr = int(year_str)
+        except ValueError:
+            await interaction.response.send_message(
+                "❌ Bitte gib eine gültige Jahreszahl ein (z.B. 2023)!",
+                ephemeral=True
+            )
+            return
+        
+        # Validiere Jahr (sinnvoller Bereich: 1998-2030)
+        if jahr < 1998 or jahr > 2030:
+            await interaction.response.send_message(
+                "❌ Bitte gib ein gültiges Jahr zwischen 1998 und 2030 ein!",
+                ephemeral=True
+            )
+            return
+        
+        await interaction.response.defer()
+        
+        # Rufe Sets für das Jahr ab
+        sets_data, error_message = await self.cog.tcgdex_service.get_sets_by_year(jahr)
+        
+        if error_message or not sets_data:
+            error_text = "❌ **Fehler beim Abrufen der Sets:**\n\n"
+            if error_message:
+                error_text += f"{error_message}\n\n"
+            else:
+                error_text += f"Keine Sets für das Jahr **{jahr}** gefunden.\n\n"
+            
+            error_text += (
+                "**Mögliche Ursachen:**\n"
+                "• API-Server nicht erreichbar\n"
+                "• Ungültiges Jahr (verfügbare Jahre: 1998-2024)\n"
+                "• Netzwerkprobleme\n\n"
+                "Bitte versuche es später erneut oder wähle ein anderes Jahr."
+            )
+            
+            await interaction.followup.send(error_text, ephemeral=True)
+            return
+        
+        # Erstelle View mit Sets
+        if self.is_wish:
+            view = TCGWishView(self.cog, jahr, sets_data)
+            await view.show_set_selection(interaction)
+        else:
+            view = TCGOfferView(self.cog, jahr, sets_data)
+            await view.show_set_selection(interaction)
+
+class TCGCardNumberInputView(discord.ui.View):
+    """View mit Button für Kartennummer-Eingabe"""
+    
+    def __init__(self, tcg_view):
+        super().__init__(timeout=300)
+        self.tcg_view = tcg_view
+    
+    @discord.ui.button(label="Kartennummer eingeben", style=discord.ButtonStyle.primary, emoji="🔢")
+    async def enter_card_number(self, interaction: discord.Interaction, button: discord.ui.Button):
+        _ = button  # Ignoriere unused argument warning
+        # Öffne Modal für Kartennummer-Eingabe
+        modal = TCGCardNumberModal(self.tcg_view)
+        await interaction.response.send_modal(modal)
+
+class TCGCardNumberModal(discord.ui.Modal):
+    """Modal für Kartennummer-Eingabe"""
+    
+    def __init__(self, view):
+        super().__init__(title="Kartennummer eingeben")
+        self.view = view
+        
+        self.card_number_input = discord.ui.TextInput(
+            label="Kartennummer",
+            placeholder="z.B. 4, 25, 123",
+            required=True,
+            max_length=10,
+            style=discord.TextStyle.short
+        )
+        self.add_item(self.card_number_input)
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        card_number = self.card_number_input.value.strip()
+        
+        # Validiere Kartennummer (nur Zahlen)
+        if not card_number.isdigit():
+            await interaction.response.send_message(
+                "❌ Bitte gib eine gültige Kartennummer ein (nur Zahlen)!",
+                ephemeral=True
+            )
+            return
+        
+        # Speichere Kartennummer
+        self.view.card_number = card_number
+        
+        # Antworte auf Modal und rufe dann Karte ab
+        await interaction.response.defer(thinking=True)
+        await self.view.fetch_card_info(interaction)
+
+class TCGOfferView(discord.ui.View):
+    """Hauptview für TCG-Angebot-Erstellung"""
+    
+    def __init__(self, cog, year, sets_data):
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.year = year
+        self.sets_data = sets_data
+        self.selected_set = None
+        self.selected_set_id = None
+        self.card_number = None
+        self.card_info = None
+        
+        # Füge Set-Select hinzu
+        if sets_data:
+            self.add_item(TCGSetSelect(self, sets_data))
+    
+    async def show_set_selection(self, interaction: discord.Interaction):
+        """Zeigt die Set-Auswahl mit Symbolen"""
+        embed = discord.Embed(
+            title="🎴 TCG-Karte anbieten - Schritt 1/3",
+            description=f"**Jahr:** {self.year}\n\nWähle das Set aus, zu dem deine Karte gehört:",
+            color=0x3498db
+        )
+        
+        # Füge Set-Symbole/Logos hinzu (maximal 10 Sets pro Embed wegen Embed-Limit)
+        set_list_items = []
+        for i, set_data in enumerate(self.sets_data[:10]):
+            # Versuche verschiedene Möglichkeiten für Symbol/Logo
+            symbol_url = ""
+            
+            # Direkte Felder
+            if isinstance(set_data, dict):
+                symbol_url = (set_data.get("symbol", "") or 
+                             set_data.get("logo", "") or
+                             set_data.get("symbolUrl", "") or
+                             set_data.get("logoUrl", ""))
+                
+                # Prüfe verschachtelte Strukturen (wie bei images)
+                if not symbol_url:
+                    images = set_data.get("images", {})
+                    if isinstance(images, dict):
+                        symbol_url = (images.get("symbol", "") or 
+                                     images.get("logo", "") or
+                                     images.get("symbolUrl", "") or
+                                     images.get("logoUrl", ""))
+                
+                # Prüfe icon Feld
+                if not symbol_url:
+                    icon = set_data.get("icon", {})
+                    if isinstance(icon, dict):
+                        symbol_url = icon.get("url", "") or icon.get("symbol", "") or icon.get("logo", "")
+                    elif isinstance(icon, str):
+                        symbol_url = icon
+            
+            set_name = set_data.get("name", f"Set {i+1}") if isinstance(set_data, dict) else f"Set {i+1}"
+            
+            # Erstelle Set-Eintrag mit Symbol-Link
+            if symbol_url:
+                # Set mit Symbol: Name als Link zum Symbol
+                set_list_items.append(f"• [{set_name} 🖼️]({symbol_url})")
+            else:
+                # Set ohne Symbol: Nur Name
+                set_list_items.append(f"• {set_name}")
+        
+        # Zeige Sets mit ihren Symbolen
+        if set_list_items:
+            set_text = "\n".join(set_list_items)
+            embed.add_field(
+                name="📦 Verfügbare Sets (klicke auf den Namen, um das Symbol zu sehen)",
+                value=set_text,
+                inline=False
+            )
+        
+        embed.set_footer(text="Schritt 1 von 3: Set auswählen")
+        
+        await interaction.followup.send(embed=embed, view=self)
+    
+    async def show_card_number_input(self, interaction: discord.Interaction):
+        """Zeigt Nachricht mit Button für Kartennummer-Eingabe"""
+        if not self.selected_set:
+            await interaction.response.send_message(
+                "❌ Fehler: Kein Set ausgewählt!",
+                ephemeral=True
+            )
+            return
+        
+        embed = discord.Embed(
+            title="🎴 TCG-Karte anbieten - Schritt 2/3",
+            description=(
+                f"**Jahr:** {self.year}\n"
+                f"**Set:** {self.selected_set.get('name', 'Unbekannt')}\n\n"
+                f"Klicke auf den Button unten, um die Kartennummer einzugeben (findest du unten rechts auf der Karte):"
+            ),
+            color=0x3498db
+        )
+        
+        # Zeige Set-Symbol/Logo falls verfügbar (mit umfassender Suche)
+        symbol_url = ""
+        if isinstance(self.selected_set, dict):
+            symbol_url = (self.selected_set.get("symbol", "") or 
+                         self.selected_set.get("logo", "") or
+                         self.selected_set.get("symbolUrl", "") or
+                         self.selected_set.get("logoUrl", ""))
+            
+            if not symbol_url:
+                images = self.selected_set.get("images", {})
+                if isinstance(images, dict):
+                    symbol_url = (images.get("symbol", "") or 
+                                 images.get("logo", "") or
+                                 images.get("symbolUrl", "") or
+                                 images.get("logoUrl", ""))
+            
+            if not symbol_url:
+                icon = self.selected_set.get("icon", {})
+                if isinstance(icon, dict):
+                    symbol_url = icon.get("url", "") or icon.get("symbol", "") or icon.get("logo", "")
+                elif isinstance(icon, str):
+                    symbol_url = icon
+        
+        if symbol_url:
+            # Zeige Set-Symbol als Hauptbild (größer und sichtbarer)
+            embed.set_image(url=symbol_url)
+            # Füge auch Info-Feld hinzu
+            embed.add_field(
+                name="🖼️ Set-Symbol",
+                value=f"[Symbol anzeigen]({symbol_url})",
+                inline=False
+            )
+        
+        embed.set_footer(text="Schritt 2 von 3: Kartennummer eingeben")
+        
+        # Erstelle View mit Button für Kartennummer-Eingabe
+        view = TCGCardNumberInputView(self)
+        await interaction.response.edit_message(embed=embed, view=view)
+    
+    async def fetch_card_info(self, interaction: discord.Interaction):
+        """Ruft Karteninformationen von der API ab"""
+        if not self.selected_set_id or not self.card_number:
+            await interaction.followup.send(
+                "❌ Fehler: Set oder Kartennummer fehlt!",
+                ephemeral=True
+            )
+            return
+        
+        # Rufe Karte von API ab
+        card_data = await self.cog.tcgdex_service.get_card(
+            self.selected_set_id,
+            self.card_number
+        )
+        
+        if not card_data:
+            await interaction.followup.send(
+                f"❌ Karte nicht gefunden!\n\n"
+                f"**Set:** {self.selected_set.get('name', 'Unbekannt')}\n"
+                f"**Kartennummer:** {self.card_number}\n\n"
+                f"Bitte überprüfe Set-ID und Kartennummer.",
+                ephemeral=True
+            )
+            return
+        
+        # Extrahiere Karteninformationen
+        self.card_info = self.cog.tcgdex_service.extract_card_info(card_data)
+        
+        # Zeige Karteninfo und finalisiere Angebot
+        await self.show_card_info(interaction)
+    
+    async def show_card_info(self, interaction: discord.Interaction):
+        """Zeigt Karteninformationen und finalisiert das Angebot"""
+        if not self.card_info:
+            await interaction.followup.send(
+                "❌ Fehler beim Abrufen der Karteninformationen!",
+                ephemeral=True
+            )
+            return
+        
+        embed = discord.Embed(
+            title="🎴 TCG-Karte anbieten - Schritt 3/3",
+            description="**Karteninformationen:**",
+            color=0x2ecc71
+        )
+        
+        # Kartenname
+        embed.add_field(
+            name="📝 Name",
+            value=self.card_info.get("name", "Unbekannt"),
+            inline=True
+        )
+        
+        # HP
+        hp = self.card_info.get("hp")
+        if hp:
+            embed.add_field(
+                name="❤️ KP",
+                value=str(hp),
+                inline=True
+            )
+        
+        # Typen
+        types = self.card_info.get("types", [])
+        if types:
+            types_str = ", ".join(types)
+            embed.add_field(
+                name="🎯 Typ(en)",
+                value=types_str,
+                inline=True
+            )
+        
+        # Set-Info
+        set_name = self.card_info.get("set_name", self.selected_set.get("name", "Unbekannt"))
+        embed.add_field(
+            name="📦 Set",
+            value=set_name,
+            inline=True
+        )
+        
+        # Kartennummer
+        embed.add_field(
+            name="🔢 Nummer",
+            value=self.card_info.get("card_number", self.card_number),
+            inline=True
+        )
+        
+        # Cardmarket-Preis
+        price = self.card_info.get("cardmarket_price")
+        if price:
+            embed.add_field(
+                name="💰 Cardmarket Preis",
+                value=f"€{price:.2f}",
+                inline=True
+            )
+        else:
+            embed.add_field(
+                name="💰 Cardmarket Preis",
+                value="Nicht verfügbar",
+                inline=True
+            )
+        
+        # Kartenbild
+        image_url = self.card_info.get("image", "")
+        if image_url:
+            embed.set_image(url=image_url)
+        
+        # Set-Symbol/Logo - zeige als Thumbnail (da Kartenbild bereits Hauptbild ist)
+        card_symbol = self.card_info.get("set_symbol", "")
+        set_symbol = self.selected_set.get("symbol", "") or self.selected_set.get("logo", "")
+        symbol_url = card_symbol or set_symbol
+        if symbol_url:
+            embed.set_thumbnail(url=symbol_url)
+            # Füge auch Info-Feld hinzu
+            embed.add_field(
+                name="🖼️ Set-Symbol",
+                value=f"[Symbol anzeigen]({symbol_url})",
+                inline=True
+            )
+        
+        embed.set_footer(text="Schritt 3 von 3: Angebot wird erstellt...")
+        
+        await interaction.followup.send(embed=embed)
+        
+        # Finalisiere Angebot
+        await self.finalize_offer(interaction)
+    
+    async def finalize_offer(self, interaction: discord.Interaction):
+        """Erstellt das TCG-Angebot im Trading-System"""
+        if not self.card_info:
+            return
+        
+        # Erstelle Angebots-Datenstruktur
+        offer_data = {
+            'name': self.card_info.get("name", "Unbekannte Karte"),
+            'type': self.card_info.get("types", ["Unbekannt"])[0] if self.card_info.get("types") else "Unbekannt",
+            'hp': self.card_info.get("hp"),
+            'phase': "TCG-Karte",  # TCG-Karten haben keine Phase
+            'rarity': "TCG-Karte",  # Seltenheit könnte aus API extrahiert werden
+            'user': interaction.user,
+            'tcg_set_id': self.selected_set_id,
+            'tcg_card_number': self.card_number,
+            'tcg_image_url': self.card_info.get("image", ""),
+            'tcg_set_symbol': self.card_info.get("set_symbol", ""),
+            'cardmarket_price': self.card_info.get("cardmarket_price"),
+            'is_tcg': True
+        }
+        
+        # Füge Angebot zum System hinzu
+        offer_id = self.cog.add_offer(offer_data)
+        
+        # Bestätigungs-Embed
+        confirm_embed = discord.Embed(
+            title="✅ TCG-Karte erfolgreich angeboten!",
+            description=f"Dein Angebot wurde mit der ID **#{offer_id}** erstellt.",
+            color=0x2ecc71
+        )
+        
+        confirm_embed.add_field(
+            name="📝 Karte",
+            value=f"{offer_data['name']} ({offer_data['hp']} KP)",
+            inline=False
+        )
+        
+        if self.card_info.get("cardmarket_price"):
+            confirm_embed.add_field(
+                name="💰 Cardmarket Preis",
+                value=f"€{self.card_info.get('cardmarket_price'):.2f}",
+                inline=True
+            )
+        
+        await interaction.followup.send(embed=confirm_embed)
+    
+    @discord.ui.button(label="Abbrechen", style=discord.ButtonStyle.secondary, emoji="❌")
+    async def cancel_offer(self, interaction: discord.Interaction, button: discord.ui.Button):
+        _ = button
+        embed = discord.Embed(
+            title="❌ TCG-Angebot abgebrochen",
+            description="Das Angebot wurde abgebrochen.",
+            color=0xff0000
+        )
+        
+        for item in self.children:
+            item.disabled = True
+        
+        await interaction.response.edit_message(embed=embed, view=self)
+
+class TCGWishView(discord.ui.View):
+    """Hauptview für TCG-Wunsch-Erstellung"""
+    
+    def __init__(self, cog, year, sets_data):
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.year = year
+        self.sets_data = sets_data
+        self.selected_set = None
+        self.selected_set_id = None
+        self.card_number = None
+        self.card_info = None
+        
+        # Füge Set-Select hinzu
+        if sets_data:
+            self.add_item(TCGSetSelect(self, sets_data))
+    
+    async def show_set_selection(self, interaction: discord.Interaction):
+        """Zeigt die Set-Auswahl mit Symbolen"""
+        embed = discord.Embed(
+            title="🌟 TCG-Karte wünschen - Schritt 1/3",
+            description=f"**Jahr:** {self.year}\n\nWähle das Set aus, zu dem deine gewünschte Karte gehört:",
+            color=0xffd700
+        )
+        
+        # Füge Set-Symbole/Logos hinzu
+        set_list_items = []
+        for i, set_data in enumerate(self.sets_data[:10]):
+            # Versuche verschiedene Möglichkeiten für Symbol/Logo
+            symbol_url = ""
+            
+            # Direkte Felder
+            if isinstance(set_data, dict):
+                symbol_url = (set_data.get("symbol", "") or 
+                             set_data.get("logo", "") or
+                             set_data.get("symbolUrl", "") or
+                             set_data.get("logoUrl", ""))
+                
+                # Prüfe verschachtelte Strukturen (wie bei images)
+                if not symbol_url:
+                    images = set_data.get("images", {})
+                    if isinstance(images, dict):
+                        symbol_url = (images.get("symbol", "") or 
+                                     images.get("logo", "") or
+                                     images.get("symbolUrl", "") or
+                                     images.get("logoUrl", ""))
+                
+                # Prüfe icon Feld
+                if not symbol_url:
+                    icon = set_data.get("icon", {})
+                    if isinstance(icon, dict):
+                        symbol_url = icon.get("url", "") or icon.get("symbol", "") or icon.get("logo", "")
+                    elif isinstance(icon, str):
+                        symbol_url = icon
+            
+            set_name = set_data.get("name", f"Set {i+1}") if isinstance(set_data, dict) else f"Set {i+1}"
+            
+            # Erstelle Set-Eintrag mit Symbol-Link
+            if symbol_url:
+                # Set mit Symbol: Name als Link zum Symbol
+                set_list_items.append(f"• [{set_name} 🖼️]({symbol_url})")
+            else:
+                # Set ohne Symbol: Nur Name
+                set_list_items.append(f"• {set_name}")
+        
+        # Zeige Sets mit ihren Symbolen
+        if set_list_items:
+            set_text = "\n".join(set_list_items)
+            embed.add_field(
+                name="📦 Verfügbare Sets (klicke auf den Namen, um das Symbol zu sehen)",
+                value=set_text,
+                inline=False
+            )
+        
+        embed.set_footer(text="Schritt 1 von 3: Set auswählen")
+        
+        await interaction.followup.send(embed=embed, view=self)
+    
+    async def show_card_number_input(self, interaction: discord.Interaction):
+        """Zeigt Nachricht mit Button für Kartennummer-Eingabe"""
+        if not self.selected_set:
+            await interaction.response.send_message(
+                "❌ Fehler: Kein Set ausgewählt!",
+                ephemeral=True
+            )
+            return
+        
+        embed = discord.Embed(
+            title="🌟 TCG-Karte wünschen - Schritt 2/3",
+            description=(
+                f"**Jahr:** {self.year}\n"
+                f"**Set:** {self.selected_set.get('name', 'Unbekannt')}\n\n"
+                f"Klicke auf den Button unten, um die Kartennummer einzugeben (findest du unten rechts auf der Karte):"
+            ),
+            color=0xffd700
+        )
+        
+        # Zeige Set-Symbol/Logo falls verfügbar (mit umfassender Suche)
+        symbol_url = ""
+        if isinstance(self.selected_set, dict):
+            symbol_url = (self.selected_set.get("symbol", "") or 
+                         self.selected_set.get("logo", "") or
+                         self.selected_set.get("symbolUrl", "") or
+                         self.selected_set.get("logoUrl", ""))
+            
+            if not symbol_url:
+                images = self.selected_set.get("images", {})
+                if isinstance(images, dict):
+                    symbol_url = (images.get("symbol", "") or 
+                                 images.get("logo", "") or
+                                 images.get("symbolUrl", "") or
+                                 images.get("logoUrl", ""))
+            
+            if not symbol_url:
+                icon = self.selected_set.get("icon", {})
+                if isinstance(icon, dict):
+                    symbol_url = icon.get("url", "") or icon.get("symbol", "") or icon.get("logo", "")
+                elif isinstance(icon, str):
+                    symbol_url = icon
+        
+        if symbol_url:
+            # Zeige Set-Symbol als Hauptbild (größer und sichtbarer)
+            embed.set_image(url=symbol_url)
+            # Füge auch Info-Feld hinzu
+            embed.add_field(
+                name="🖼️ Set-Symbol",
+                value=f"[Symbol anzeigen]({symbol_url})",
+                inline=False
+            )
+        
+        embed.set_footer(text="Schritt 2 von 3: Kartennummer eingeben")
+        
+        # Erstelle View mit Button für Kartennummer-Eingabe
+        view = TCGCardNumberInputView(self)
+        await interaction.response.edit_message(embed=embed, view=view)
+    
+    async def fetch_card_info(self, interaction: discord.Interaction):
+        """Ruft Karteninformationen von der API ab"""
+        if not self.selected_set_id or not self.card_number:
+            await interaction.followup.send(
+                "❌ Fehler: Set oder Kartennummer fehlt!",
+                ephemeral=True
+            )
+            return
+        
+        card_data = await self.cog.tcgdex_service.get_card(
+            self.selected_set_id,
+            self.card_number
+        )
+        
+        if not card_data:
+            await interaction.followup.send(
+                f"❌ Karte nicht gefunden!\n\n"
+                f"**Set:** {self.selected_set.get('name', 'Unbekannt')}\n"
+                f"**Kartennummer:** {self.card_number}\n\n"
+                f"Bitte überprüfe Set-ID und Kartennummer.",
+                ephemeral=True
+            )
+            return
+        
+        self.card_info = self.cog.tcgdex_service.extract_card_info(card_data)
+        await self.show_card_info(interaction)
+    
+    async def show_card_info(self, interaction: discord.Interaction):
+        """Zeigt Karteninformationen und finalisiert den Wunsch"""
+        if not self.card_info:
+            await interaction.followup.send(
+                "❌ Fehler beim Abrufen der Karteninformationen!",
+                ephemeral=True
+            )
+            return
+        
+        embed = discord.Embed(
+            title="🌟 TCG-Karte wünschen - Schritt 3/3",
+            description="**Karteninformationen:**",
+            color=0xffd700
+        )
+        
+        embed.add_field(
+            name="📝 Name",
+            value=self.card_info.get("name", "Unbekannt"),
+            inline=True
+        )
+        
+        hp = self.card_info.get("hp")
+        if hp:
+            embed.add_field(
+                name="❤️ KP",
+                value=str(hp),
+                inline=True
+            )
+        
+        types = self.card_info.get("types", [])
+        if types:
+            types_str = ", ".join(types)
+            embed.add_field(
+                name="🎯 Typ(en)",
+                value=types_str,
+                inline=True
+            )
+        
+        set_name = self.card_info.get("set_name", self.selected_set.get("name", "Unbekannt"))
+        embed.add_field(
+            name="📦 Set",
+            value=set_name,
+            inline=True
+        )
+        
+        embed.add_field(
+            name="🔢 Nummer",
+            value=self.card_info.get("card_number", self.card_number),
+            inline=True
+        )
+        
+        price = self.card_info.get("cardmarket_price")
+        if price:
+            embed.add_field(
+                name="💰 Cardmarket Preis",
+                value=f"€{price:.2f}",
+                inline=True
+            )
+        
+        image_url = self.card_info.get("image", "")
+        if image_url:
+            embed.set_image(url=image_url)
+        
+        card_symbol = self.card_info.get("set_symbol", "")
+        set_symbol = self.selected_set.get("symbol", "") or self.selected_set.get("logo", "")
+        symbol_url = card_symbol or set_symbol
+        if symbol_url:
+            embed.set_thumbnail(url=symbol_url)
+            # Füge auch Info-Feld hinzu
+            embed.add_field(
+                name="🖼️ Set-Symbol",
+                value=f"[Symbol anzeigen]({symbol_url})",
+                inline=True
+            )
+        
+        embed.set_footer(text="Schritt 3 von 3: Wunsch wird erstellt...")
+        
+        await interaction.followup.send(embed=embed)
+        await self.finalize_wish(interaction)
+    
+    async def finalize_wish(self, interaction: discord.Interaction):
+        """Erstellt den TCG-Wunsch im Trading-System"""
+        if not self.card_info:
+            return
+        
+        wish_data = {
+            'name': self.card_info.get("name", "Unbekannte Karte"),
+            'type': self.card_info.get("types", ["Unbekannt"])[0] if self.card_info.get("types") else "Unbekannt",
+            'hp': self.card_info.get("hp"),
+            'phase': "TCG-Karte",
+            'rarity': "TCG-Karte",
+            'user': interaction.user,
+            'tcg_set_id': self.selected_set_id,
+            'tcg_card_number': self.card_number,
+            'tcg_image_url': self.card_info.get("image", ""),
+            'tcg_set_symbol': self.card_info.get("set_symbol", ""),
+            'cardmarket_price': self.card_info.get("cardmarket_price"),
+            'is_tcg': True
+        }
+        
+        wish_id = self.cog.add_wish(wish_data)
+        
+        confirm_embed = discord.Embed(
+            title="✅ TCG-Karte erfolgreich als Wunsch hinzugefügt!",
+            description=f"Dein Wunsch wurde mit der ID **#{wish_id}** erstellt.",
+            color=0xffd700
+        )
+        
+        confirm_embed.add_field(
+            name="📝 Karte",
+            value=f"{wish_data['name']} ({wish_data['hp']} KP)" if wish_data['hp'] else wish_data['name'],
+            inline=False
+        )
+        
+        if self.card_info.get("cardmarket_price"):
+            confirm_embed.add_field(
+                name="💰 Cardmarket Preis",
+                value=f"€{self.card_info.get('cardmarket_price'):.2f}",
+                inline=True
+            )
+        
+        await interaction.followup.send(embed=confirm_embed)
+    
+    @discord.ui.button(label="Abbrechen", style=discord.ButtonStyle.secondary, emoji="❌")
+    async def cancel_wish(self, interaction: discord.Interaction, button: discord.ui.Button):
+        _ = button
+        embed = discord.Embed(
+            title="❌ TCG-Wunsch abgebrochen",
+            description="Der Wunsch wurde abgebrochen.",
+            color=0xff0000
+        )
+        
+        for item in self.children:
+            item.disabled = True
+        
+        await interaction.response.edit_message(embed=embed, view=self)
+
 class Pokemon(commands.Cog):
     """Pokemon Tausch System"""
     
     def __init__(self, bot):
         self.bot = bot
+        
+        # TCGdx API Service
+        self.tcgdex_service = TCGdexService()
         
         # Speicher für aktive Pokemon-Angebote (in Produktion sollte das eine Datenbank sein)
         self.active_offers = {}  # offer_id: pokemon_data
@@ -2598,6 +3509,21 @@ class Pokemon(commands.Cog):
             inline=False
         )
         
+        embed.add_field(
+            name="🎴 TCG-Karten Trading (Slash Commands)",
+            value=(
+                "`/anbieten-tcg jahr:2023` - Biete eine Pokemon TCG-Karte an\n"
+                "  • Schritt 1: Jahr eingeben (z.B. 2023)\n"
+                "  • Schritt 2: Set auswählen (mit Set-Symbolen)\n"
+                "  • Schritt 3: Kartennummer eingeben\n"
+                "  • Automatisch: KP, Typ, Cardmarket-Preis werden abgerufen\n\n"
+                "`/wünschen-tcg jahr:2023` - Erstelle einen Wunsch für eine TCG-Karte\n"
+                "  • Gleicher Prozess wie `/anbieten-tcg`\n\n"
+                "*TCG-Commands nutzen echte Kartendaten aus der TCGdx API*"
+            ),
+            inline=False
+        )
+        
         # Pokemon-Typen
         types_text = "\n".join([f"{emoji} {name}" for emoji, name in self.pokemon_types.items()])
         embed.add_field(
@@ -2627,7 +3553,12 @@ class Pokemon(commands.Cog):
             value="• Sei ehrlich bei den Pokemon-Daten\n"
                   "• Verwende klare Pokemon-Namen\n"
                   "• KP sollten realistisch sein\n"
-                  "• Nutze private Nachrichten für Tauschverhandlungen",
+                  "• Nutze private Nachrichten für Tauschverhandlungen\n\n"
+                  "**Für TCG-Karten:**\n"
+                  "• Finde das Erscheinungsjahr auf deiner Karte\n"
+                  "• Suche das Set-Symbol (unten rechts auf der Karte)\n"
+                  "• Die Kartennummer steht unten rechts (z.B. 4/102)\n"
+                  "• Der Bot zeigt automatisch KP, Typ und Cardmarket-Preis",
             inline=False
         )
         
@@ -2813,6 +3744,34 @@ class Pokemon(commands.Cog):
             del self.active_wishes[wish_id]
             return True
         return False
+    
+    # ============= TCG Slash Commands =============
+    
+    @app_commands.command(name='anbieten-tcg', description='Biete eine Pokemon TCG-Karte zum Tausch an')
+    async def anbieten_tcg(self, interaction: discord.Interaction):
+        """Slash-Command für TCG-Karten-Angebot"""
+        embed = discord.Embed(
+            title="🎴 TCG-Karte anbieten",
+            description="Bitte gib das Erscheinungsjahr der Karte ein.\n\nKlicke auf den Button unten, um das Jahr einzugeben:",
+            color=0x3498db
+        )
+        embed.set_footer(text="Das Jahr findest du auf deiner Karte")
+        
+        view = TCGYearInputView(self, is_wish=False)
+        await interaction.response.send_message(embed=embed, view=view)
+    
+    @app_commands.command(name='wünschen-tcg', description='Erstelle einen Wunsch für eine Pokemon TCG-Karte')
+    async def wuenschen_tcg(self, interaction: discord.Interaction):
+        """Slash-Command für TCG-Karten-Wunsch"""
+        embed = discord.Embed(
+            title="🌟 TCG-Karte wünschen",
+            description="Bitte gib das Erscheinungsjahr der Karte ein.\n\nKlicke auf den Button unten, um das Jahr einzugeben:",
+            color=0xffd700
+        )
+        embed.set_footer(text="Das Jahr findest du auf deiner Karte")
+        
+        view = TCGYearInputView(self, is_wish=True)
+        await interaction.response.send_message(embed=embed, view=view)
 
 async def setup(bot):
     """Setup function for the cog"""
