@@ -13,6 +13,7 @@ class TCGdexService:
     """Service-Klasse für TCGdex API-Requests"""
     
     BASE_URL = "https://api.tcgdex.net/v2/de"
+    ASSETS_BASE_URL = "https://assets.tcgdex.net/univ/"
     TIMEOUT = 10  # Sekunden
     
     def __init__(self):
@@ -190,7 +191,23 @@ class TCGdexService:
         Returns:
             Set-Daten oder None wenn nicht gefunden
         """
-        return await self._request(f"/sets/{set_id}")
+        set_data = await self._request(f"/sets/{set_id}")
+        
+        # Falls Set-Daten vorhanden, aber Symbol-URL nicht oder ohne Erweiterung:
+        # Konstruiere/fixe Symbol-URL
+        if set_data and isinstance(set_data, dict):
+            symbol_url = set_data.get("symbol", "")
+            if not symbol_url:
+                # Versuche Symbol-URL zu konstruieren
+                serie_id = set_data.get("serie", {}).get("id", "") if isinstance(set_data.get("serie"), dict) else ""
+                if serie_id:
+                    symbol_url = self.construct_symbol_url(set_id, serie_id)
+                    set_data["symbol"] = symbol_url
+            else:
+                # Fixe URL falls keine Erweiterung vorhanden
+                set_data["symbol"] = self.fix_symbol_url(symbol_url)
+        
+        return set_data
     
     async def get_card(self, set_id: str, card_number: str) -> Optional[Dict[str, Any]]:
         """
@@ -300,4 +317,49 @@ class TCGdexService:
             "image": image_url,
             "cardmarket_price": cardmarket_price
         }
+    
+    def construct_symbol_url(self, set_id: str, serie_id: str, image_format: str = "webp") -> str:
+        """
+        Konstruiert eine Symbol-URL für ein Set basierend auf Set-ID und Serie
+        
+        Format: {ASSETS_BASE_URL}{serieId}/{setId}/symbol.{format}
+        
+        Args:
+            set_id: Die Set-ID (z.B. "sv4", "swsh3")
+            serie_id: Die Serien-ID (z.B. "sv", "swsh")
+            image_format: Bildformat ("webp", "png", "jpg"). Standard: "webp"
+        
+        Returns:
+            Konstruierte Symbol-URL
+        """
+        symbol_url = f"{self.ASSETS_BASE_URL}{serie_id.lower()}/{set_id.lower()}/symbol.{image_format}"
+        return symbol_url
+    
+    def fix_symbol_url(self, symbol_url: str) -> str:
+        """
+        Korrigiert eine Symbol-URL falls sie keine Dateierweiterung hat
+        
+        Args:
+            symbol_url: Die ursprüngliche Symbol-URL
+        
+        Returns:
+            Korrigierte URL mit Dateierweiterung (.webp)
+        """
+        if not symbol_url:
+            return ""
+        
+        # Falls URL bereits eine Dateierweiterung hat, zurückgeben wie sie ist
+        if symbol_url.endswith((".webp", ".png", ".jpg", ".jpeg")):
+            return symbol_url
+        
+        # Falls URL mit "/symbol" endet (ohne Erweiterung), füge .webp hinzu
+        if symbol_url.endswith("/symbol"):
+            return f"{symbol_url}.webp"
+        
+        # Falls URL anders endet, füge /symbol.webp hinzu falls nötig
+        if "/symbol" not in symbol_url:
+            return symbol_url  # Keine Symbol-URL, zurückgeben wie sie ist
+        
+        # Füge .webp hinzu
+        return f"{symbol_url}.webp"
 

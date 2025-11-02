@@ -2,7 +2,8 @@
 Tests für TCGdx Service
 """
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+import asyncio
+from unittest.mock import AsyncMock, patch
 import aiohttp
 from cogs.tcgdex_service import TCGdexService
 
@@ -23,22 +24,22 @@ class TestTCGdexService:
                 "id": "sv4a",
                 "name": "Stellar Crown",
                 "releaseDate": "2024-08-23",
-                "symbol": "https://assets.tcgdx.net/univ/sv/sv4a/symbol",
-                "logo": "https://assets.tcgdx.net/en/sv/sv4a/logo"
+                "symbol": "https://assets.tcgdex.net/univ/sv/sv4a/symbol",
+                "logo": "https://assets.tcgdex.net/en/sv/sv4a/logo"
             },
             {
                 "id": "sv5",
                 "name": "Ancient Roar",
                 "releaseDate": "2024-11-01",
-                "symbol": "https://assets.tcgdx.net/univ/sv/sv5/symbol",
-                "logo": "https://assets.tcgdx.net/en/sv/sv5/logo"
+                "symbol": "https://assets.tcgdex.net/univ/sv/sv5/symbol",
+                "logo": "https://assets.tcgdex.net/en/sv/sv5/logo"
             },
             {
                 "id": "sv4",
                 "name": "Temporal Forces",
                 "releaseDate": "2024-03-22",
-                "symbol": "https://assets.tcgdx.net/univ/sv/sv4/symbol",
-                "logo": "https://assets.tcgdx.net/en/sv/sv4/logo"
+                "symbol": "https://assets.tcgdex.net/univ/sv/sv4/symbol",
+                "logo": "https://assets.tcgdex.net/en/sv/sv4/logo"
             }
         ]
     
@@ -50,19 +51,19 @@ class TestTCGdexService:
                 "id": "sv4a",
                 "name": "Stellar Crown",
                 "releaseDate": "2024-08-23",
-                "symbol": "https://assets.tcgdx.net/univ/sv/sv4a/symbol"
+                "symbol": "https://assets.tcgdex.net/univ/sv/sv4a/symbol"
             },
             {
                 "id": "sv3",
                 "name": "Paradox Rift",
                 "releaseDate": "2023-11-03",
-                "symbol": "https://assets.tcgdx.net/univ/sv/sv3/symbol"
+                "symbol": "https://assets.tcgdex.net/univ/sv/sv3/symbol"
             },
             {
                 "id": "sv5",
                 "name": "Ancient Roar",
                 "releaseDate": "2024-11-01",
-                "symbol": "https://assets.tcgdx.net/univ/sv/sv5/symbol"
+                "symbol": "https://assets.tcgdex.net/univ/sv/sv5/symbol"
             }
         ]
     
@@ -109,13 +110,13 @@ class TestTCGdexService:
                 "id": "sv3",
                 "name": "Paradox Rift",
                 "releaseDate": "2023-11-03",
-                "symbol": "https://assets.tcgdx.net/univ/sv/sv3/symbol"
+                "symbol": "https://assets.tcgdex.net/univ/sv/sv3/symbol"
             },
             {
                 "id": "sv2",
                 "name": "Paldea Evolved",
                 "releaseDate": "2023-06-09",
-                "symbol": "https://assets.tcgdx.net/univ/sv/sv2/symbol"
+                "symbol": "https://assets.tcgdex.net/univ/sv/sv2/symbol"
             }
         ]
         
@@ -175,18 +176,18 @@ class TestTCGdexService:
                 "id": "sv4a",
                 "name": "Stellar Crown",
                 "releaseDate": "invalid-date",
-                "symbol": "https://assets.tcgdx.net/univ/sv/sv4a/symbol"
+                "symbol": "https://assets.tcgdex.net/univ/sv/sv4a/symbol"
             },
             {
                 "id": "sv4",
                 "name": "Temporal Forces",
                 "releaseDate": "2024-03-22",
-                "symbol": "https://assets.tcgdx.net/univ/sv/sv4/symbol"
+                "symbol": "https://assets.tcgdex.net/univ/sv/sv4/symbol"
             },
             {
                 "id": "no-date",
                 "name": "Set ohne Datum",
-                "symbol": "https://assets.tcgdx.net/univ/sv/nodate/symbol"
+                "symbol": "https://assets.tcgdex.net/univ/sv/nodate/symbol"
                 # Kein releaseDate Feld
             }
         ]
@@ -352,9 +353,9 @@ class TestTCGdexService:
                     "id": "sv4",
                     "name": "Temporal Forces",
                     "releaseDate": "2024-03-22",
-                    "symbol": "https://assets.tcgdx.net/univ/sv/sv4/symbol"
+                    "symbol": "https://assets.tcgdex.net/univ/sv/sv4/symbol"
                 },
-                "expected_url": "https://assets.tcgdx.net/univ/sv/sv4/symbol"
+                "expected_url": "https://assets.tcgdex.net/univ/sv/sv4/symbol.webp"
             },
             {
                 "name": "Direktes logo Feld",
@@ -362,9 +363,9 @@ class TestTCGdexService:
                     "id": "sv5",
                     "name": "Ancient Roar",
                     "releaseDate": "2024-11-01",
-                    "logo": "https://assets.tcgdx.net/en/sv/sv5/logo"
+                    "logo": "https://assets.tcgdex.net/en/sv/sv5/logo"
                 },
-                "expected_url": "https://assets.tcgdx.net/en/sv/sv5/logo"
+                "expected_url": "https://assets.tcgdex.net/en/sv/sv5/logo"
             },
             {
                 "name": "Verschachtelt in images.symbol",
@@ -373,11 +374,11 @@ class TestTCGdexService:
                     "name": "Test Set",
                     "releaseDate": "2024-12-01",
                     "images": {
-                        "symbol": "https://assets.tcgdx.net/univ/sv/sv6/symbol",
-                        "logo": "https://assets.tcgdx.net/en/sv/sv6/logo"
+                        "symbol": "https://assets.tcgdex.net/univ/sv/sv6/symbol",
+                        "logo": "https://assets.tcgdex.net/en/sv/sv6/logo"
                     }
                 },
-                "expected_url": "https://assets.tcgdx.net/univ/sv/sv6/symbol"
+                "expected_url": "https://assets.tcgdex.net/univ/sv/sv6/symbol.webp"
             },
             {
                 "name": "Verschachtelt in images.logo (falls symbol fehlt)",
@@ -386,10 +387,10 @@ class TestTCGdexService:
                     "name": "Test Set 2",
                     "releaseDate": "2024-12-01",
                     "images": {
-                        "logo": "https://assets.tcgdx.net/en/sv/sv7/logo"
+                        "logo": "https://assets.tcgdex.net/en/sv/sv7/logo"
                     }
                 },
-                "expected_url": "https://assets.tcgdx.net/en/sv/sv7/logo"
+                "expected_url": "https://assets.tcgdex.net/en/sv/sv7/logo"
             },
             {
                 "name": "symbolUrl Feld",
@@ -397,9 +398,9 @@ class TestTCGdexService:
                     "id": "sv8",
                     "name": "Test Set 3",
                     "releaseDate": "2024-12-01",
-                    "symbolUrl": "https://assets.tcgdx.net/univ/sv/sv8/symbol"
+                    "symbolUrl": "https://assets.tcgdex.net/univ/sv/sv8/symbol"
                 },
-                "expected_url": "https://assets.tcgdx.net/univ/sv/sv8/symbol"
+                "expected_url": "https://assets.tcgdex.net/univ/sv/sv8/symbol.webp"
             },
             {
                 "name": "logoUrl Feld",
@@ -407,9 +408,9 @@ class TestTCGdexService:
                     "id": "sv9",
                     "name": "Test Set 4",
                     "releaseDate": "2024-12-01",
-                    "logoUrl": "https://assets.tcgdx.net/en/sv/sv9/logo"
+                    "logoUrl": "https://assets.tcgdex.net/en/sv/sv9/logo"
                 },
-                "expected_url": "https://assets.tcgdx.net/en/sv/sv9/logo"
+                "expected_url": "https://assets.tcgdex.net/en/sv/sv9/logo"
             },
             {
                 "name": "icon.url Feld",
@@ -418,10 +419,10 @@ class TestTCGdexService:
                     "name": "Test Set 5",
                     "releaseDate": "2024-12-01",
                     "icon": {
-                        "url": "https://assets.tcgdx.net/univ/sv/sv10/icon"
+                        "url": "https://assets.tcgdex.net/univ/sv/sv10/icon"
                     }
                 },
-                "expected_url": "https://assets.tcgdx.net/univ/sv/sv10/icon"
+                "expected_url": "https://assets.tcgdex.net/univ/sv/sv10/icon"
             },
             {
                 "name": "icon als String",
@@ -429,9 +430,9 @@ class TestTCGdexService:
                     "id": "sv11",
                     "name": "Test Set 6",
                     "releaseDate": "2024-12-01",
-                    "icon": "https://assets.tcgdx.net/univ/sv/sv11/icon"
+                    "icon": "https://assets.tcgdex.net/univ/sv/sv11/icon"
                 },
-                "expected_url": "https://assets.tcgdx.net/univ/sv/sv11/icon"
+                "expected_url": "https://assets.tcgdex.net/univ/sv/sv11/icon"
             },
             {
                 "name": "Kein Logo vorhanden",
@@ -496,6 +497,10 @@ class TestTCGdexService:
                             symbol_url = icon.get("url", "") or icon.get("symbol", "") or icon.get("logo", "")
                         elif isinstance(icon, str):
                             symbol_url = icon
+                
+                # Fixe URL falls nötig (wie im Code implementiert)
+                if symbol_url:
+                    symbol_url = service.fix_symbol_url(symbol_url)
                 
                 # Assertion
                 assert symbol_url == expected_url, (
@@ -590,4 +595,68 @@ class TestTCGdexService:
             
         finally:
             await service.close()
+    
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    async def test_construct_symbol_url_with_real_api(self, service):
+        """Integration Test: Teste ob konstruierte Symbol-URLs tatsächlich funktionieren"""
+        
+        # Test verschiedene Sets mit bekannten IDs
+        test_sets = [
+            {"set_id": "swsh3", "serie_id": "swsh", "name": "Darkness Ablaze"},
+            {"set_id": "sv4", "serie_id": "sv", "name": "Temporal Forces"},
+            {"set_id": "sv5", "serie_id": "sv", "name": "Ancient Roar"},
+            {"set_id": "swsh1", "serie_id": "swsh", "name": "Sword & Shield"},
+        ]
+        
+        print("\n🔍 Teste konstruierte Symbol-URLs mit echter API:\n")
+        
+        successful_urls = 0
+        failed_urls = 0
+        
+        async with aiohttp.ClientSession() as session:
+            for test_set in test_sets:
+                set_id = test_set["set_id"]
+                serie_id = test_set["serie_id"]
+                set_name = test_set["name"]
+                
+                # Konstruiere Symbol-URL
+                symbol_url = service.construct_symbol_url(set_id, serie_id, "webp")
+                
+                print(f"  Testing: {set_name} ({set_id})")
+                print(f"    URL: {symbol_url}")
+                
+                try:
+                    # Versuche das Symbol abzurufen
+                    async with session.get(symbol_url) as response:
+                        if response.status == 200:
+                            content_type = response.headers.get("Content-Type", "")
+                            content_length = response.headers.get("Content-Length", "unknown")
+                            
+                            # Prüfe ob es tatsächlich ein Bild ist
+                            if "image" in content_type.lower() or content_type.startswith("image/"):
+                                successful_urls += 1
+                                print(f"    ✅ Symbol gefunden! (Content-Type: {content_type}, Size: {content_length})")
+                            else:
+                                failed_urls += 1
+                                print(f"    ❌ Kein Bild (Content-Type: {content_type})")
+                        elif response.status == 404:
+                            failed_urls += 1
+                            print("    ❌ Symbol nicht gefunden (404)")
+                        else:
+                            failed_urls += 1
+                            print(f"    ❌ Fehler: HTTP {response.status}")
+                
+                except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+                    failed_urls += 1
+                    print(f"    ❌ Fehler beim Abrufen: {e}")
+        
+        print("\n📊 Zusammenfassung:")
+        print(f"  Erfolgreiche URLs: {successful_urls}/{len(test_sets)}")
+        print(f"  Fehlgeschlagene URLs: {failed_urls}/{len(test_sets)}")
+        
+        # Mindestens eine URL sollte funktionieren
+        assert successful_urls > 0, "Mindestens eine Symbol-URL sollte funktionieren!"
+        
+        await service.close()
 

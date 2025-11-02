@@ -1361,9 +1361,25 @@ class TCGOfferView(discord.ui.View):
             set_name = set_data.get("name", f"Set {i+1}") if isinstance(set_data, dict) else f"Set {i+1}"
             
             # Erstelle Set-Eintrag mit Symbol-Link
+            final_symbol_url = ""
             if symbol_url:
+                # Fixe Symbol-URL falls nötig (füge .webp hinzu wenn fehlt)
+                final_symbol_url = self.cog.tcgdex_service.fix_symbol_url(symbol_url)
+            else:
+                # Versuche Symbol-URL zu konstruieren wenn keine vorhanden
+                set_id = set_data.get("id", "") if isinstance(set_data, dict) else ""
+                if set_id:
+                    serie_id = None
+                    if isinstance(set_data, dict):
+                        serie_info = set_data.get("serie", {})
+                        if isinstance(serie_info, dict):
+                            serie_id = serie_info.get("id")
+                    if serie_id:
+                        final_symbol_url = self.cog.tcgdex_service.construct_symbol_url(set_id, serie_id)
+            
+            if final_symbol_url:
                 # Set mit Symbol: Name als Link zum Symbol
-                set_list_items.append(f"• [{set_name} 🖼️]({symbol_url})")
+                set_list_items.append(f"• [{set_name} 🖼️]({final_symbol_url})")
             else:
                 # Set ohne Symbol: Nur Name
                 set_list_items.append(f"• {set_name}")
@@ -1684,9 +1700,25 @@ class TCGWishView(discord.ui.View):
             set_name = set_data.get("name", f"Set {i+1}") if isinstance(set_data, dict) else f"Set {i+1}"
             
             # Erstelle Set-Eintrag mit Symbol-Link
+            final_symbol_url = ""
             if symbol_url:
+                # Fixe Symbol-URL falls nötig (füge .webp hinzu wenn fehlt)
+                final_symbol_url = self.cog.tcgdex_service.fix_symbol_url(symbol_url)
+            else:
+                # Versuche Symbol-URL zu konstruieren wenn keine vorhanden
+                set_id = set_data.get("id", "") if isinstance(set_data, dict) else ""
+                if set_id:
+                    serie_id = None
+                    if isinstance(set_data, dict):
+                        serie_info = set_data.get("serie", {})
+                        if isinstance(serie_info, dict):
+                            serie_id = serie_info.get("id")
+                    if serie_id:
+                        final_symbol_url = self.cog.tcgdex_service.construct_symbol_url(set_id, serie_id)
+            
+            if final_symbol_url:
                 # Set mit Symbol: Name als Link zum Symbol
-                set_list_items.append(f"• [{set_name} 🖼️]({symbol_url})")
+                set_list_items.append(f"• [{set_name} 🖼️]({final_symbol_url})")
             else:
                 # Set ohne Symbol: Nur Name
                 set_list_items.append(f"• {set_name}")
