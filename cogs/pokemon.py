@@ -1322,15 +1322,18 @@ class TCGOfferView(discord.ui.View):
     
     async def show_set_selection(self, interaction: discord.Interaction):
         """Zeigt die Set-Auswahl mit Symbolen"""
-        embed = discord.Embed(
+        # Haupt-Embed mit Anweisungen
+        main_embed = discord.Embed(
             title="🎴 TCG-Karte anbieten - Schritt 1/3",
             description=f"**Jahr:** {self.year}\n\nWähle das Set aus, zu dem deine Karte gehört:",
             color=0x3498db
         )
+        main_embed.set_footer(text="Schritt 1 von 3: Set auswählen")
         
-        # Füge Set-Symbole/Logos hinzu (maximal 10 Sets pro Embed wegen Embed-Limit)
-        set_list_items = []
-        for i, set_data in enumerate(self.sets_data[:10]):
+        # Erstelle separate Embeds für jedes Set (max 9, da wir 1 für Haupt-Embed brauchen)
+        set_embeds = [main_embed]
+        
+        for i, set_data in enumerate(self.sets_data[:9]):  # Max 9 Sets wegen 10-Embed-Limit
             # Versuche verschiedene Möglichkeiten für Symbol/Logo
             symbol_url = ""
             
@@ -1359,15 +1362,22 @@ class TCGOfferView(discord.ui.View):
                         symbol_url = icon
             
             set_name = set_data.get("name", f"Set {i+1}") if isinstance(set_data, dict) else f"Set {i+1}"
+            set_id = set_data.get("id", "") if isinstance(set_data, dict) else ""
             
-            # Erstelle Set-Eintrag mit Symbol-Link
+            # Erstelle Set-Embed
+            set_embed = discord.Embed(
+                title=f"📦 {set_name}",
+                description=f"**Set-ID:** {set_id}",
+                color=0x3498db
+            )
+            
+            # Versuche Symbol-URL zu finden/konstruieren
             final_symbol_url = ""
             if symbol_url:
                 # Fixe Symbol-URL falls nötig (füge .webp hinzu wenn fehlt)
                 final_symbol_url = self.cog.tcgdex_service.fix_symbol_url(symbol_url)
             else:
                 # Versuche Symbol-URL zu konstruieren wenn keine vorhanden
-                set_id = set_data.get("id", "") if isinstance(set_data, dict) else ""
                 if set_id:
                     serie_id = None
                     if isinstance(set_data, dict):
@@ -1377,25 +1387,14 @@ class TCGOfferView(discord.ui.View):
                     if serie_id:
                         final_symbol_url = self.cog.tcgdex_service.construct_symbol_url(set_id, serie_id)
             
+            # Setze Symbol als Thumbnail
             if final_symbol_url:
-                # Set mit Symbol: Name als Link zum Symbol
-                set_list_items.append(f"• [{set_name} 🖼️]({final_symbol_url})")
-            else:
-                # Set ohne Symbol: Nur Name
-                set_list_items.append(f"• {set_name}")
+                set_embed.set_thumbnail(url=final_symbol_url)
+            
+            set_embeds.append(set_embed)
         
-        # Zeige Sets mit ihren Symbolen
-        if set_list_items:
-            set_text = "\n".join(set_list_items)
-            embed.add_field(
-                name="📦 Verfügbare Sets (klicke auf den Namen, um das Symbol zu sehen)",
-                value=set_text,
-                inline=False
-            )
-        
-        embed.set_footer(text="Schritt 1 von 3: Set auswählen")
-        
-        await interaction.followup.send(embed=embed, view=self)
+        # Sende alle Embeds zusammen
+        await interaction.followup.send(embeds=set_embeds, view=self)
     
     async def show_card_number_input(self, interaction: discord.Interaction):
         """Zeigt Nachricht mit Button für Kartennummer-Eingabe"""
@@ -1660,16 +1659,19 @@ class TCGWishView(discord.ui.View):
             self.add_item(TCGSetSelect(self, sets_data))
     
     async def show_set_selection(self, interaction: discord.Interaction):
-        """Zeigt die Set-Auswahl mit Symbolen"""
-        embed = discord.Embed(
+        """Zeigt die Set-Auswahl mit Symbolen als Multiple Embeds"""
+        # Haupt-Embed mit Anweisungen
+        main_embed = discord.Embed(
             title="🌟 TCG-Karte wünschen - Schritt 1/3",
             description=f"**Jahr:** {self.year}\n\nWähle das Set aus, zu dem deine gewünschte Karte gehört:",
             color=0xffd700
         )
+        main_embed.set_footer(text="Schritt 1 von 3: Set auswählen")
         
-        # Füge Set-Symbole/Logos hinzu
-        set_list_items = []
-        for i, set_data in enumerate(self.sets_data[:10]):
+        # Erstelle separate Embeds für jedes Set (max 9, da wir 1 für Haupt-Embed brauchen)
+        set_embeds = [main_embed]
+        
+        for i, set_data in enumerate(self.sets_data[:9]):  # Max 9 Sets wegen 10-Embed-Limit
             # Versuche verschiedene Möglichkeiten für Symbol/Logo
             symbol_url = ""
             
@@ -1698,15 +1700,22 @@ class TCGWishView(discord.ui.View):
                         symbol_url = icon
             
             set_name = set_data.get("name", f"Set {i+1}") if isinstance(set_data, dict) else f"Set {i+1}"
+            set_id = set_data.get("id", "") if isinstance(set_data, dict) else ""
             
-            # Erstelle Set-Eintrag mit Symbol-Link
+            # Erstelle Set-Embed
+            set_embed = discord.Embed(
+                title=f"📦 {set_name}",
+                description=f"**Set-ID:** {set_id}",
+                color=0x3498db
+            )
+            
+            # Versuche Symbol-URL zu finden/konstruieren
             final_symbol_url = ""
             if symbol_url:
                 # Fixe Symbol-URL falls nötig (füge .webp hinzu wenn fehlt)
                 final_symbol_url = self.cog.tcgdex_service.fix_symbol_url(symbol_url)
             else:
                 # Versuche Symbol-URL zu konstruieren wenn keine vorhanden
-                set_id = set_data.get("id", "") if isinstance(set_data, dict) else ""
                 if set_id:
                     serie_id = None
                     if isinstance(set_data, dict):
@@ -1716,25 +1725,14 @@ class TCGWishView(discord.ui.View):
                     if serie_id:
                         final_symbol_url = self.cog.tcgdex_service.construct_symbol_url(set_id, serie_id)
             
+            # Setze Symbol als Thumbnail
             if final_symbol_url:
-                # Set mit Symbol: Name als Link zum Symbol
-                set_list_items.append(f"• [{set_name} 🖼️]({final_symbol_url})")
-            else:
-                # Set ohne Symbol: Nur Name
-                set_list_items.append(f"• {set_name}")
+                set_embed.set_thumbnail(url=final_symbol_url)
+            
+            set_embeds.append(set_embed)
         
-        # Zeige Sets mit ihren Symbolen
-        if set_list_items:
-            set_text = "\n".join(set_list_items)
-            embed.add_field(
-                name="📦 Verfügbare Sets (klicke auf den Namen, um das Symbol zu sehen)",
-                value=set_text,
-                inline=False
-            )
-        
-        embed.set_footer(text="Schritt 1 von 3: Set auswählen")
-        
-        await interaction.followup.send(embed=embed, view=self)
+        # Sende alle Embeds zusammen
+        await interaction.followup.send(embeds=set_embeds, view=self)
     
     async def show_card_number_input(self, interaction: discord.Interaction):
         """Zeigt Nachricht mit Button für Kartennummer-Eingabe"""
