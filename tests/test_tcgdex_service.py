@@ -660,3 +660,67 @@ class TestTCGdexService:
         
         await service.close()
 
+    @pytest.mark.integration
+    async def test_construct_card_image_url_with_real_api(self, service):
+        """Integration Test: Teste ob konstruierte Karten-Bild-URLs tatsächlich funktionieren"""
+        
+        # Test verschiedene Karten mit bekannten IDs
+        test_cards = [
+            {"set_id": "swsh3", "serie_id": "swsh", "card_number": "136", "name": "Charizard"},
+            {"set_id": "sv4", "serie_id": "sv", "card_number": "25", "name": "Pikachu"},
+            {"set_id": "swsh1", "serie_id": "swsh", "card_number": "4", "name": "Charmander"},
+            {"set_id": "sv5", "serie_id": "sv", "card_number": "1", "name": "Bulbasaur"},
+        ]
+        
+        print("\n🔍 Teste konstruierte Karten-Bild-URLs mit echter API:\n")
+        
+        successful_urls = 0
+        failed_urls = 0
+        
+        async with aiohttp.ClientSession() as session:
+            for test_card in test_cards:
+                set_id = test_card["set_id"]
+                serie_id = test_card["serie_id"]
+                card_number = test_card["card_number"]
+                card_name = test_card["name"]
+                
+                # Konstruiere Karten-Bild-URL
+                image_url = service.construct_card_image_url(set_id, serie_id, card_number, "en", "low")
+                
+                print(f"  Testing: {card_name} #{card_number} ({set_id})")
+                print(f"    URL: {image_url}")
+                
+                try:
+                    # Versuche das Kartenbild abzurufen
+                    async with session.get(image_url) as response:
+                        if response.status == 200:
+                            content_type = response.headers.get("Content-Type", "")
+                            content_length = response.headers.get("Content-Length", "unknown")
+                            
+                            # Prüfe ob es tatsächlich ein Bild ist
+                            if "image" in content_type.lower() or content_type.startswith("image/"):
+                                successful_urls += 1
+                                print(f"    ✅ Kartenbild gefunden! (Content-Type: {content_type}, Size: {content_length})")
+                            else:
+                                failed_urls += 1
+                                print(f"    ❌ Kein Bild (Content-Type: {content_type})")
+                        elif response.status == 404:
+                            failed_urls += 1
+                            print("    ❌ Kartenbild nicht gefunden (404)")
+                        else:
+                            failed_urls += 1
+                            print(f"    ❌ Fehler: HTTP {response.status}")
+                
+                except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+                    failed_urls += 1
+                    print(f"    ❌ Fehler beim Abrufen: {e}")
+        
+        print("\n📊 Zusammenfassung:")
+        print(f"  Erfolgreiche URLs: {successful_urls}/{len(test_cards)}")
+        print(f"  Fehlgeschlagene URLs: {failed_urls}/{len(test_cards)}")
+        
+        # Mindestens eine URL sollte funktionieren
+        assert successful_urls > 0, "Mindestens eine Karten-Bild-URL sollte funktionieren!"
+        
+        await service.close()
+

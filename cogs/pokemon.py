@@ -1877,6 +1877,12 @@ class TCGWishView(discord.ui.View):
                 value=f"€{price:.2f}",
                 inline=True
             )
+        else:
+            embed.add_field(
+                name="💰 Cardmarket Preis",
+                value="Nicht verfügbar",
+                inline=True
+            )
         
         image_url = self.card_info.get("image", "")
         if image_url:

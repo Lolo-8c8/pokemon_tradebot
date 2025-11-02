@@ -282,30 +282,55 @@ class TCGdexService:
         else:
             image_url = ""
         
-        # Extrahiere Cardmarket-Preis
-        cardmarket_price = None
-        tcgplayer = card_data.get("tcgplayer", {})
-        if isinstance(tcgplayer, dict):
-            prices = tcgplayer.get("prices", {})
-            if isinstance(prices, dict):
-                # Prüfe verschiedene Preis-Typen
-                for price_type in ["normal", "holofoil", "reverseHolofoil", "1stEditionHolofoil"]:
-                    price_data = prices.get(price_type, {})
-                    if isinstance(price_data, dict):
-                        market_price = price_data.get("market", 0) or price_data.get("averageSellPrice", 0)
-                        if market_price:
-                            cardmarket_price = float(market_price)
-                            break
+        # Versuche immer Assets-URL zu konstruieren (bessere Qualität)
+        card_number = card_data.get("number", "")
+        set_info = card_data.get("set", {})
+        if isinstance(set_info, dict) and card_number:
+            set_id = set_info.get("id", "")
+            serie_info = set_info.get("serie", {})
+            if isinstance(serie_info, dict):
+                serie_id = serie_info.get("id", "")
+                if set_id and serie_id:
+                    # Verwende Assets-URL als primäre Quelle
+                    assets_image_url = self.construct_card_image_url(set_id, serie_id, str(card_number))
+                    image_url = assets_image_url  # Überschreibe API-Bild mit Assets-URL
         
-        # Alternative: Prüfe direkt cardmarket Feld falls vorhanden
-        if not cardmarket_price:
-            cardmarket = card_data.get("cardmarket", {})
+        # Extrahiere Preise basierend auf TCGdx API Dokumentation
+        cardmarket_price = None
+        
+        # Prüfe pricing Feld (neue API-Struktur)
+        pricing = card_data.get("pricing", {})
+        if isinstance(pricing, dict):
+            # Cardmarket (EUR) - Europa
+            cardmarket = pricing.get("cardmarket", {})
             if isinstance(cardmarket, dict):
-                prices = cardmarket.get("prices", {})
-                if isinstance(prices, dict):
-                    market_price = prices.get("averageSellPrice", 0)
-                    if market_price:
-                        cardmarket_price = float(market_price)
+                # Versuche verschiedene Preis-Typen (avg, trend, avg-holo)
+                cardmarket_price = (
+                    cardmarket.get("avg") or 
+                    cardmarket.get("trend") or 
+                    cardmarket.get("avg-holo") or 
+                    cardmarket.get("trend-holo")
+                )
+                if cardmarket_price:
+                    cardmarket_price = float(cardmarket_price)
+            
+            # Falls kein Cardmarket-Preis, versuche TCGplayer (USD) - Nordamerika
+            if not cardmarket_price:
+                tcgplayer = pricing.get("tcgplayer", {})
+                if isinstance(tcgplayer, dict):
+                    # Prüfe verschiedene Varianten
+                    for variant in ["normal", "reverse", "holo"]:
+                        variant_data = tcgplayer.get(variant, {})
+                        if isinstance(variant_data, dict):
+                            price = (
+                                variant_data.get("marketPrice") or 
+                                variant_data.get("midPrice") or 
+                                variant_data.get("lowPrice")
+                            )
+                            if price:
+                                cardmarket_price = float(price)
+                                break
+        
         
         return {
             "name": card_data.get("name", ""),
@@ -362,4 +387,25 @@ class TCGdexService:
         
         # Füge .webp hinzu
         return f"{symbol_url}.webp"
+    
+    def construct_card_image_url(self, set_id: str, serie_id: str, card_number: str, language: str = "en", quality: str = "low") -> str:
+        """
+        Konstruiert eine Karten-Bild-URL basierend auf Set-ID, Serie und Kartennummer
+        
+        Format: {base_url}/{language}/{serieId}/{setId}/{cardNumber}/{quality}.webp
+        
+        Args:
+            set_id: Die Set-ID (z.B. "swsh3", "sv4")
+            serie_id: Die Serien-ID (z.B. "swsh", "sv")
+            card_number: Die Kartennummer (z.B. "136", "25")
+            language: Sprache ("en", "de", etc.). Standard: "en"
+            quality: Bildqualität ("low", "high"). Standard: "low"
+        
+        Returns:
+            Konstruierte Karten-Bild-URL
+        """
+        # Verwende direkte Assets-URL (nicht die ASSETS_BASE_URL für Symbole)
+        base_url = "https://assets.tcgdex.net"
+        image_url = f"{base_url}/{language}/{serie_id.lower()}/{set_id.lower()}/{card_number}/{quality}.webp"
+        return image_url
 
